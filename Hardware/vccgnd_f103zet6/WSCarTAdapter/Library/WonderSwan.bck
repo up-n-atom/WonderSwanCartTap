@@ -1,0 +1,27 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP 2003
+D 2003
+$ENDCMP
+#
+$CMP EDGE
+D Edge Connector
+$ENDCMP
+#
+$CMP Giza
+D Battery Backup, SOP-8
+$ENDCMP
+#
+$CMP MBM29DL400TC
+D 4M (512Kx8/256Kx16) BIT Flash Memory
+$ENDCMP
+#
+$CMP S3511A
+D Real-time clock
+$ENDCMP
+#
+$CMP UPD442000A
+D 2M BIT CMOS Static RAM
+$ENDCMP
+#
+#End Doc Library
