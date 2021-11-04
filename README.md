@@ -1,4 +1,4 @@
-# WonderSwan Cartridge USB Utility
+# USB WonderSwan Cartridge Utility
 
 ## VCC-GND STM32F103ZET6 Main Board
 
