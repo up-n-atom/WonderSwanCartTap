@@ -8,7 +8,7 @@ The prototype is developed on a [vcc-gnd.com](http://vcc-gnd.com) STM32F103ZET6 
 
 KiCAD project files are available in the [Hardware](/Hardware) directory.
 
-* TSOP-48 Adapter
+* [TSOP-48 Adapter](/Hardware/vccgnd_f103zet6/TSOP48Adapter)
 * [WonderSwan Cartridge Adapter](/Hardware/vccgnd_f103zet6/WSCarTAdapter)
 
 ![Adapter Boards](https://user-images.githubusercontent.com/234549/140374414-5fc2d95d-b451-44c6-8a49-53895978b57d.jpg)
