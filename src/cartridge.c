@@ -398,22 +398,24 @@ static inline uint32_t __cart_get_secret(void)
 
     /* Read PB4 - 1 cycle setup + XFER_WIDTH cycles */
     __dma_xfer_blocking();
-    /* clean up */
     __dma_reset();
 
     /* Isolate PB4 input */
-    for (i = 0; i < XFER_WIDTH; i++) {
+
+    /* Find 1st falling edge */
+    for (i = 0; i < XFER_WIDTH; ++i) {
         if (!__ibuf[i]) continue;
-        /* Find 1st falling edge */
         if (!((__ibuf[i] >> 4) & 1)) break;
-        /* Clear buffer */
         __ibuf[i] = 0;
     }
     /* Build handshake secret */
-    for (j = 0; i < XFER_WIDTH && j < SECRET_WIDTH; i++, j++) {
+    for (j = 0; i < XFER_WIDTH && j < SECRET_WIDTH; ++i, ++j) {
         sec |= (uint32_t)(((__ibuf[i] >> 4) & 1) << j);
-        /* Clear buffer */
         __ibuf[i] = 0;
+    }
+    /* Clear remaining buffer */
+    while (i < XFER_WIDTH) {
+        __ibuf[i++] = 0;
     }
 
     return sec;
