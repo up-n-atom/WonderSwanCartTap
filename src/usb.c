@@ -158,7 +158,7 @@ static const struct usb_dfu_descriptor __dfu_function = {
     .bDescriptorType = DFU_FUNCTIONAL,
     .bmAttributes = USB_DFU_CAN_DOWNLOAD | USB_DFU_CAN_UPLOAD | USB_DFU_WILL_DETACH,
     .wDetachTimeout = 255,
-    .wTransferSize = 1024,
+    .wTransferSize = USB_CONTROL_BUF_SIZE,
     .bcdDFUVersion = 0x011a,
 };
 
@@ -234,7 +234,7 @@ static const char *__strings[] = {
     "WS Cart Tap DFU",
 };
 
-static uint8_t __control_buffer[1024] __attribute__ ((aligned (2)));
+static uint8_t __control_buffer[USB_CONTROL_BUF_SIZE] __attribute__ ((aligned (2)));
 
 usbd_device* usb_setup(void)
 {
