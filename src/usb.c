@@ -157,7 +157,7 @@ static const struct usb_dfu_descriptor __dfu_function = {
     .bLength = sizeof(struct usb_dfu_descriptor),
     .bDescriptorType = DFU_FUNCTIONAL,
     .bmAttributes = USB_DFU_CAN_DOWNLOAD | USB_DFU_CAN_UPLOAD,
-    .wDetachTimeout = 255,
+    .wDetachTimeout = 0,
     .wTransferSize = USB_CONTROL_BUF_SIZE,
     .bcdDFUVersion = 0x011a,
 };
