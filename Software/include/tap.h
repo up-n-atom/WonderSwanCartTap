@@ -20,33 +20,26 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#include <stddef.h>
-#include <stdint.h>
+#ifndef TAP_H
+#define TAP_H
 
-#include <libopencm3/usb/dfu.h>
-#include <libopencm3/usb/usbd.h>
+enum tap_req {
+    TAP_HANDSHK,
+    TAP_PRTPOKE,
+    TAP_ROM0POKE,
+    TAP_ROM1POKE,
+    TAP_RAMPOKE,
+    TAP_PRTPEEK,
+    TAP_ROM0PEEK,
+    TAP_ROM1PEEK,
+    TAP_RAMPEEK,
+    /* Convenience methods */
+    TAP_DUMPHDR = 0x10,
+    TAP_DUMPROM,
+    TAP_DUMPRAM,
+    TAP_DUMPEEP,
+};
 
-#include "dfu.h"
+void tap_set_config(usbd_device *dev, uint16_t wValue);
 
-static enum usbd_request_return_codes dfu_control_request(
-    usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
-    void (**complete)(usbd_device *usbd_dev, struct usb_setup_data *req))
-{
-    (void)usbd_dev;
-    (void)buf;
-    (void)len;
-    (void)complete;
-
-    if (req->wIndex != 2) return USBD_REQ_NEXT_CALLBACK;
-
-    return USBD_REQ_NOTSUPP;
-}
-
-void dfu_set_config(usbd_device *dev, uint16_t wValue)
-{
-    (void)wValue;
-
-    usbd_register_control_callback(dev, USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
-                                   USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
-                                   dfu_control_request);
-}
+#endif
