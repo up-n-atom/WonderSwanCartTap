@@ -49,4 +49,8 @@ void fsmc_disable(void);
 
 uint8_t fsmc_toggle_bus_width(void);
 
+extern void fsmc_bus_width_8(void);
+
+extern void fsmc_bus_width_16(void);
+
 #endif

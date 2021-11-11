@@ -206,29 +206,28 @@ void cart_2k3_nor_poke_enable(void)
 {
     uint8_t val;
 
-    if (FSMC_NOR_PSRAM_16BITS)
-        (void)fsmc_toggle_bus_width();
+    fsmc_bus_width_8();
 
     (void)cart_mbc_peek(REG_MEMORY_CTRL, &val);
 
     if (!(val & 1))
         (void)cart_mbc_poke(REG_MEMORY_CTRL, val | (uint8_t)1);
+
+    /* Continue to use FSMC as an 8-bit bus */
 }
 
 void cart_2k3_nor_poke_disable(void)
 {
     uint8_t val;
 
-    if (FSMC_NOR_PSRAM_16BITS)
-        (void)fsmc_toggle_bus_width();
+    fsmc_bus_width_8();
 
     (void)cart_mbc_peek(REG_MEMORY_CTRL, &val);
 
     if (val & 1)
         (void)cart_mbc_poke(REG_MEMORY_CTRL, val & (uint8_t)~1);
 
-    if (!FSMC_NOR_PSRAM_16BITS)
-        (void)fsmc_toggle_bus_width();
+    fsmc_bus_width_16();
 }
 
 void cart_clock_start(void)

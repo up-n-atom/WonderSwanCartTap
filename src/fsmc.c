@@ -153,3 +153,15 @@ uint8_t fsmc_toggle_bus_width(void)
 
     return (uint8_t)(FSMC_BCR2 & FSMC_BCR_MWID_16BITS);
 }
+
+inline void fsmc_bus_width_8(void)
+{
+    if (FSMC_NOR_PSRAM_16BITS)
+        (void)fsmc_toggle_bus_width();
+}
+
+inline void fsmc_bus_width_16(void)
+{
+    if (!FSMC_NOR_PSRAM_16BITS)
+        (void)fsmc_toggle_bus_width();
+}
