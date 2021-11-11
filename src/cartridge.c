@@ -76,7 +76,7 @@ int cart_mbc_peek(const uint8_t reg, uint8_t *val)
 
 #ifndef STRICT
     if (FSMC_NOR_PSRAM_16BITS)
-        *val = (uint8_t)(__cart_read_word((((reg & 0xf0) << 12) | (reg & 0xf)) << 1) & 0xff);
+        *val = (uint8_t)__cart_read_word((((reg & 0xf0) << 12) | (reg & 0xf)) << 1);
     else
 #endif
         *val = __cart_read_byte(((reg & 0xf0) << 12) | (reg & 0xf));
@@ -181,7 +181,7 @@ int cart_sram_peek(const uint32_t addr, uint8_t *val)
         /* enforce prior call to fsmc_toggle_bus_width() */
         return BADWIDTH;
 #else
-        *val = (uint8_t)(__cart_read_word(addr << 1) & 0xff);
+        *val = (uint8_t)__cart_read_word(addr << 1);
 #endif
     else
         *val = __cart_read_byte(addr);
