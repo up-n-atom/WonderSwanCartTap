@@ -124,13 +124,13 @@ void fsmc_reset(void)
 __attribute__((always_inline))
 inline void fsmc_enable(void)
 {
-    FSMC_BCR2 &= ~FSMC_BCR_MBKEN;
+    FSMC_BCR2 |= FSMC_BCR_MBKEN;
 }
 
 __attribute__((always_inline))
 inline void fsmc_disable(void)
 {
-    FSMC_BCR2 |= FSMC_BCR_MBKEN;
+    FSMC_BCR2 &= ~FSMC_BCR_MBKEN;
 }
 
 uint8_t fsmc_toggle_bus_width(void)
