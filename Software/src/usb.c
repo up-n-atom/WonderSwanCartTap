@@ -35,18 +35,7 @@
 extern void dfu_set_config(usbd_device *dev, uint16_t wValue);
 extern void cdcacm_set_config(usbd_device *dev, uint16_t wValue);
 
-static const char *usb_strings[] = {
-    "Eleven, Twenty-two",
-    "WonderSwan Cartridge Tap",
-#if 1
-    /* Todo: Use desig_get_unique_id_as_dfu() */
-    "SERIALNUM",
-#endif
-    "WS Cart Tap UART",
-    "WS Cart Tap DFU",
-};
-
-static const struct usb_device_descriptor dev_desc = {
+static const struct usb_device_descriptor __dev_desc = {
     .bLength = USB_DT_DEVICE_SIZE,
     .bDescriptorType = USB_DT_DEVICE,
     .bcdUSB = 0x0200,
@@ -66,7 +55,7 @@ static const struct usb_device_descriptor dev_desc = {
     .bNumConfigurations = 1,
 };
 
-static const struct usb_endpoint_descriptor uart_comm_endp[] = {{
+static const struct usb_endpoint_descriptor __uart_comm_endp[] = {{
     .bLength = USB_DT_ENDPOINT_SIZE,
     .bDescriptorType = USB_DT_ENDPOINT,
     .bEndpointAddress = 0x82,
@@ -75,7 +64,7 @@ static const struct usb_endpoint_descriptor uart_comm_endp[] = {{
     .bInterval = 255,
 }};
 
-static const struct usb_endpoint_descriptor uart_data_endp[] = {{
+static const struct usb_endpoint_descriptor __uart_data_endp[] = {{
     .bLength = USB_DT_ENDPOINT_SIZE,
     .bDescriptorType = USB_DT_ENDPOINT,
     .bEndpointAddress = 0x01,
@@ -96,7 +85,7 @@ static const struct {
     struct usb_cdc_call_management_descriptor call_mgmt;
     struct usb_cdc_acm_descriptor acm;
     struct usb_cdc_union_descriptor cdc_union;
-} __attribute__((packed)) uart_cdcacm_functional_descriptors = {
+} __attribute__((packed)) __uart_cdcacm_func_descs = {
     .header = {
         .bFunctionLength = sizeof(struct usb_cdc_header_descriptor),
         .bDescriptorType = CS_INTERFACE,
@@ -125,7 +114,7 @@ static const struct {
     }
 };
 
-static const struct usb_interface_descriptor uart_comm_iface[] = {{
+static const struct usb_interface_descriptor __uart_comm_iface[] = {{
     .bLength = USB_DT_INTERFACE_SIZE,
     .bDescriptorType = USB_DT_INTERFACE,
     .bInterfaceNumber = 0,
@@ -135,12 +124,12 @@ static const struct usb_interface_descriptor uart_comm_iface[] = {{
     .bInterfaceSubClass = USB_CDC_SUBCLASS_ACM,
     .bInterfaceProtocol = USB_CDC_PROTOCOL_AT,
     .iInterface = 4, /* Strings index + 1 */
-    .endpoint = uart_comm_endp,
-    .extra = &uart_cdcacm_functional_descriptors,
-    .extralen = sizeof(uart_cdcacm_functional_descriptors)
+    .endpoint = __uart_comm_endp,
+    .extra = &__uart_cdcacm_func_descs,
+    .extralen = sizeof(__uart_cdcacm_func_descs)
 }};
 
-static const struct usb_interface_descriptor uart_data_iface[] = {{
+static const struct usb_interface_descriptor __uart_data_iface[] = {{
     .bLength = USB_DT_INTERFACE_SIZE,
     .bDescriptorType = USB_DT_INTERFACE,
     .bInterfaceNumber = 1,
@@ -150,10 +139,10 @@ static const struct usb_interface_descriptor uart_data_iface[] = {{
     .bInterfaceSubClass = 0,
     .bInterfaceProtocol = 0,
     .iInterface = 0,
-    .endpoint = uart_data_endp,
+    .endpoint = __uart_data_endp,
 }};
 
-static const struct usb_iface_assoc_descriptor uart_assoc = {
+static const struct usb_iface_assoc_descriptor __uart_assoc = {
     .bLength = USB_DT_INTERFACE_ASSOCIATION_SIZE,
     .bDescriptorType = USB_DT_INTERFACE_ASSOCIATION,
     .bFirstInterface = 0,
@@ -164,16 +153,16 @@ static const struct usb_iface_assoc_descriptor uart_assoc = {
     .iFunction = 0,
 };
 
-const struct usb_dfu_descriptor dfu_function = {
+static const struct usb_dfu_descriptor __dfu_function = {
     .bLength = sizeof(struct usb_dfu_descriptor),
     .bDescriptorType = DFU_FUNCTIONAL,
-    .bmAttributes = USB_DFU_CAN_DOWNLOAD | USB_DFU_CAN_UPLOAD | USB_DFU_WILL_DETACH,
-    .wDetachTimeout = 255,
-    .wTransferSize = 1024,
+    .bmAttributes = USB_DFU_CAN_DOWNLOAD | USB_DFU_CAN_UPLOAD,
+    .wDetachTimeout = 0,
+    .wTransferSize = USB_CONTROL_BUF_SIZE,
     .bcdDFUVersion = 0x011a,
 };
 
-const struct usb_interface_descriptor dfu_iface = {
+static const struct usb_interface_descriptor __dfu_iface = {
     .bLength = USB_DT_INTERFACE_SIZE,
     .bDescriptorType = USB_DT_INTERFACE,
     .bInterfaceNumber = 2,
@@ -183,11 +172,11 @@ const struct usb_interface_descriptor dfu_iface = {
     .bInterfaceSubClass = 1,
     .bInterfaceProtocol = 1,
     .iInterface = 5, /* Strings index + 1 */
-    .extra = &dfu_function,
-    .extralen = sizeof(dfu_function),
+    .extra = &__dfu_function,
+    .extralen = sizeof(__dfu_function),
 };
 
-static const struct usb_iface_assoc_descriptor dfu_assoc = {
+static const struct usb_iface_assoc_descriptor __dfu_assoc = {
     .bLength = USB_DT_INTERFACE_ASSOCIATION_SIZE,
     .bDescriptorType = USB_DT_INTERFACE_ASSOCIATION,
     .bFirstInterface = 2,
@@ -198,20 +187,20 @@ static const struct usb_iface_assoc_descriptor dfu_assoc = {
     .iFunction = 5, /* Strings index + 1 */
 };
 
-static const struct usb_interface usb_ifaces[] = {{
+static const struct usb_interface __ifaces[] = {{
     .num_altsetting = 1,
-    .iface_assoc = &uart_assoc,
-    .altsetting = uart_comm_iface,
+    .iface_assoc = &__uart_assoc,
+    .altsetting = __uart_comm_iface,
 }, {
     .num_altsetting = 1,
-    .altsetting = uart_data_iface,
+    .altsetting = __uart_data_iface,
 }, {
     .num_altsetting = 1,
-    .iface_assoc = &dfu_assoc,
-    .altsetting = &dfu_iface,
+    .iface_assoc = &__dfu_assoc,
+    .altsetting = &__dfu_iface,
 }};
 
-static const struct usb_config_descriptor usb_config = {
+static const struct usb_config_descriptor __config = {
     .bLength = USB_DT_CONFIGURATION_SIZE,
     .bDescriptorType = USB_DT_CONFIGURATION,
     .wTotalLength = 0,
@@ -220,7 +209,7 @@ static const struct usb_config_descriptor usb_config = {
     .iConfiguration = 0,
     .bmAttributes = 0x80,
     .bMaxPower = 0x32,
-    .interface = usb_ifaces,
+    .interface = __ifaces,
 };
 
 __attribute__((always_inline))
@@ -234,7 +223,18 @@ static inline void __usb_reenumerate(void)
     msleep(3);
 }
 
-static uint8_t usbd_control_buffer[256] __attribute__ ((aligned (2)));
+static const char *__strings[] = {
+    "Eleven, Twenty-two",
+    "WonderSwan Cartridge Tap",
+#if 1
+    /* Todo: Use desig_get_unique_id_as_dfu() */
+    "SERIALNUM",
+#endif
+    "WS Cart Tap UART",
+    "WS Cart Tap DFU",
+};
+
+static uint8_t __control_buffer[USB_CONTROL_BUF_SIZE] __attribute__ ((aligned (2)));
 
 usbd_device* usb_setup(void)
 {
@@ -246,9 +246,9 @@ usbd_device* usb_setup(void)
 
     rcc_periph_reset_pulse(RST_USB);
 
-    dev = usbd_init(&st_usbfs_v1_usb_driver, &dev_desc, &usb_config,
-                    usb_strings, sizeof(usb_strings) / sizeof(char*),
-                    usbd_control_buffer, sizeof(usbd_control_buffer));
+    dev = usbd_init(&st_usbfs_v1_usb_driver, &__dev_desc, &__config,
+                    __strings, sizeof(__strings) / sizeof(char*),
+                    __control_buffer, sizeof(__control_buffer));
 
     usbd_register_set_config_callback(dev, dfu_set_config);
     usbd_register_set_config_callback(dev, cdcacm_set_config);

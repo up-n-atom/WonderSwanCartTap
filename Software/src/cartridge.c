@@ -72,19 +72,16 @@ int cart_mbc_peek(const uint8_t reg, uint8_t *val)
 
     /* SS */
     gpio_clear(GPIOF, GPIO10);
-    msleep(1);
 
 #ifndef STRICT
     if (FSMC_NOR_PSRAM_16BITS)
-        *val = (uint8_t)(__cart_read_word((((reg & 0xf0) << 12) | (reg & 0xf)) << 1) & 0xff);
+        *val = (uint8_t)__cart_read_word((((reg & 0xf0) << 12) | (reg & 0xf)) << 1);
     else
-#else
-        *val = __cart_read_byte(((reg & 0xf0) << 12) | (reg & 0xf));
 #endif
+        *val = __cart_read_byte(((reg & 0xf0) << 12) | (reg & 0xf));
 
     /* SS */
     gpio_set(GPIOF, GPIO10);
-    msleep(1);
 
     return FIN;
 }
@@ -100,19 +97,16 @@ int cart_mbc_poke(const uint8_t reg, const uint8_t val)
 
     /* SS */
     gpio_clear(GPIOF, GPIO10);
-    msleep(1);
 
 #ifndef STRICT
     if (FSMC_NOR_PSRAM_16BITS)
         __cart_write_word((((reg & 0xf0) << 12) | (reg & 0xf)) << 1, (uint16_t)val);
     else
-#else
-        __cart_write_byte(((reg & 0xf0) << 12) | (reg & 0xf), val);
 #endif
+        __cart_write_byte(((reg & 0xf0) << 12) | (reg & 0xf), val);
 
     /* SS */
     gpio_set(GPIOF, GPIO10);
-    msleep(1);
 
     return FIN;
 }
@@ -121,9 +115,11 @@ int cart_nor_peek(const uint32_t addr, uint16_t *val)
 {
     if (NULL == val) return BADPTR;
 
-    if (!RAM_ADDR_VALID(addr)) return BADADDR;
+    if (!ROM_ADDR_VALID(addr)) return BADADDR;
 
     if (FSMC_NOR_PSRAM_16BITS) {
+        if (addr % 2) return BADADDR;
+
         *val = __cart_read_word(addr << 1);
     } else {
         /* bitbang Q15/A-1 */
@@ -150,6 +146,8 @@ int cart_nor_poke(const uint32_t addr, const uint16_t val)
         /* enforce prior calls to fsmc_toggle_bus_width() and cart_port_poke(REG_MEMORY_CTRL, 1) */
         return BADWIDTH;
 #else
+        if (addr % 2) return BADADDR;
+
         __cart_write_word(addr << 1, val);
 #endif
     } else {
@@ -179,7 +177,7 @@ int cart_sram_peek(const uint32_t addr, uint8_t *val)
         /* enforce prior call to fsmc_toggle_bus_width() */
         return BADWIDTH;
 #else
-        *val = (uint8_t)(__cart_read_word(addr << 1) & 0xff);
+        *val = (uint8_t)__cart_read_word(addr << 1);
 #endif
     else
         *val = __cart_read_byte(addr);
@@ -208,29 +206,28 @@ void cart_2k3_nor_poke_enable(void)
 {
     uint8_t val;
 
-    if (FSMC_NOR_PSRAM_16BITS)
-        (void)fsmc_toggle_bus_width();
+    fsmc_bus_width_8();
 
     (void)cart_mbc_peek(REG_MEMORY_CTRL, &val);
 
     if (!(val & 1))
         (void)cart_mbc_poke(REG_MEMORY_CTRL, val | (uint8_t)1);
+
+    /* Continue to use FSMC as an 8-bit bus */
 }
 
 void cart_2k3_nor_poke_disable(void)
 {
     uint8_t val;
 
-    if (FSMC_NOR_PSRAM_16BITS)
-        (void)fsmc_toggle_bus_width();
+    fsmc_bus_width_8();
 
     (void)cart_mbc_peek(REG_MEMORY_CTRL, &val);
 
     if (val & 1)
         (void)cart_mbc_poke(REG_MEMORY_CTRL, val & (uint8_t)~1);
 
-    if (!FSMC_NOR_PSRAM_16BITS)
-        (void)fsmc_toggle_bus_width();
+    fsmc_bus_width_16();
 }
 
 void cart_clock_start(void)
@@ -398,22 +395,24 @@ static inline uint32_t __cart_get_secret(void)
 
     /* Read PB4 - 1 cycle setup + XFER_WIDTH cycles */
     __dma_xfer_blocking();
-    /* clean up */
     __dma_reset();
 
     /* Isolate PB4 input */
-    for (i = 0; i < XFER_WIDTH; i++) {
+
+    /* Find 1st falling edge */
+    for (i = 0; i < XFER_WIDTH; ++i) {
         if (!__ibuf[i]) continue;
-        /* Find 1st falling edge */
         if (!((__ibuf[i] >> 4) & 1)) break;
-        /* Clear buffer */
         __ibuf[i] = 0;
     }
     /* Build handshake secret */
-    for (j = 0; i < XFER_WIDTH && j < SECRET_WIDTH; i++, j++) {
+    for (j = 0; i < XFER_WIDTH && j < SECRET_WIDTH; ++i, ++j) {
         sec |= (uint32_t)(((__ibuf[i] >> 4) & 1) << j);
-        /* Clear buffer */
         __ibuf[i] = 0;
+    }
+    /* Clear remaining buffer */
+    while (i < XFER_WIDTH) {
+        __ibuf[i++] = 0;
     }
 
     return sec;
