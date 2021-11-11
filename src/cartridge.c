@@ -124,6 +124,8 @@ int cart_nor_peek(const uint32_t addr, uint16_t *val)
     if (!ROM_ADDR_VALID(addr)) return BADADDR;
 
     if (FSMC_NOR_PSRAM_16BITS) {
+        if (addr % 2) return BADADDR;
+
         *val = __cart_read_word(addr << 1);
     } else {
         /* bitbang Q15/A-1 */
@@ -150,6 +152,8 @@ int cart_nor_poke(const uint32_t addr, const uint16_t val)
         /* enforce prior calls to fsmc_toggle_bus_width() and cart_port_poke(REG_MEMORY_CTRL, 1) */
         return BADWIDTH;
 #else
+        if (addr % 2) return BADADDR;
+
         __cart_write_word(addr << 1, val);
 #endif
     } else {
