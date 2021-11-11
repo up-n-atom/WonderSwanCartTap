@@ -121,7 +121,7 @@ int cart_nor_peek(const uint32_t addr, uint16_t *val)
 {
     if (NULL == val) return BADPTR;
 
-    if (!RAM_ADDR_VALID(addr)) return BADADDR;
+    if (!ROM_ADDR_VALID(addr)) return BADADDR;
 
     if (FSMC_NOR_PSRAM_16BITS) {
         *val = __cart_read_word(addr << 1);
