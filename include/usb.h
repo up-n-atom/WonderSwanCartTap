@@ -23,6 +23,8 @@
 #ifndef USB_H
 #define USB_H
 
+#define USB_CONTROL_BUF_SIZE 1024
+
 usbd_device* usb_setup(void);
 
 #endif
