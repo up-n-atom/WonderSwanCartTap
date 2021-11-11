@@ -78,9 +78,8 @@ int cart_mbc_peek(const uint8_t reg, uint8_t *val)
     if (FSMC_NOR_PSRAM_16BITS)
         *val = (uint8_t)(__cart_read_word((((reg & 0xf0) << 12) | (reg & 0xf)) << 1) & 0xff);
     else
-#else
-        *val = __cart_read_byte(((reg & 0xf0) << 12) | (reg & 0xf));
 #endif
+        *val = __cart_read_byte(((reg & 0xf0) << 12) | (reg & 0xf));
 
     /* SS */
     gpio_set(GPIOF, GPIO10);
@@ -106,9 +105,8 @@ int cart_mbc_poke(const uint8_t reg, const uint8_t val)
     if (FSMC_NOR_PSRAM_16BITS)
         __cart_write_word((((reg & 0xf0) << 12) | (reg & 0xf)) << 1, (uint16_t)val);
     else
-#else
-        __cart_write_byte(((reg & 0xf0) << 12) | (reg & 0xf), val);
 #endif
+        __cart_write_byte(((reg & 0xf0) << 12) | (reg & 0xf), val);
 
     /* SS */
     gpio_set(GPIOF, GPIO10);
