@@ -36,10 +36,11 @@ static enum usbd_request_return_codes cdcacm_control_request(
     void (**complete)(usbd_device *dev, struct usb_setup_data *req))
 {
     (void)dev;
-    (void)req;
     (void)buf;
     (void)len;
     (void)complete;
+
+    if (req->wIndex != 1) return USBD_REQ_NEXT_CALLBACK;
 
     return USBD_REQ_NOTSUPP;
 }

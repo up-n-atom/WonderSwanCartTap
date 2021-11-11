@@ -32,6 +32,7 @@
 #include "platform.h"
 #include "usb.h"
 
+extern void tap_set_config(usbd_device *dev, uint16_t wValue);
 extern void dfu_set_config(usbd_device *dev, uint16_t wValue);
 extern void cdcacm_set_config(usbd_device *dev, uint16_t wValue);
 
@@ -187,6 +188,21 @@ static const struct usb_iface_assoc_descriptor __dfu_assoc = {
     .iFunction = 5, /* Strings index + 1 */
 };
 
+static const struct usb_interface_descriptor __tap_iface = {
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = 3,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 0,
+	.bInterfaceClass = USB_CLASS_VENDOR,
+	.bInterfaceSubClass = 0,
+	.bInterfaceProtocol = 0,
+    .iInterface = 6, /* Strings index + 1 */
+	.endpoint = NULL,
+	.extra = NULL,
+	.extralen = 0
+};
+
 static const struct usb_interface __ifaces[] = {{
     .num_altsetting = 1,
     .iface_assoc = &__uart_assoc,
@@ -198,13 +214,16 @@ static const struct usb_interface __ifaces[] = {{
     .num_altsetting = 1,
     .iface_assoc = &__dfu_assoc,
     .altsetting = &__dfu_iface,
+}, {
+    .num_altsetting = 1,
+    .altsetting = &__tap_iface,
 }};
 
 static const struct usb_config_descriptor __config = {
     .bLength = USB_DT_CONFIGURATION_SIZE,
     .bDescriptorType = USB_DT_CONFIGURATION,
     .wTotalLength = 0,
-    .bNumInterfaces = 3,
+    .bNumInterfaces = 4,
     .bConfigurationValue = 1,
     .iConfiguration = 0,
     .bmAttributes = 0x80,
@@ -232,6 +251,7 @@ static const char *__strings[] = {
 #endif
     "WS Cart Tap UART",
     "WS Cart Tap DFU",
+    "WS Cart Tap TAP"
 };
 
 static uint8_t __control_buffer[USB_CONTROL_BUF_SIZE] __attribute__ ((aligned (2)));
@@ -250,6 +270,7 @@ usbd_device* usb_setup(void)
                     __strings, sizeof(__strings) / sizeof(char*),
                     __control_buffer, sizeof(__control_buffer));
 
+    usbd_register_set_config_callback(dev, tap_set_config);
     usbd_register_set_config_callback(dev, dfu_set_config);
     usbd_register_set_config_callback(dev, cdcacm_set_config);
 
