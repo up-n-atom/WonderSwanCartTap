@@ -72,7 +72,6 @@ int cart_mbc_peek(const uint8_t reg, uint8_t *val)
 
     /* SS */
     gpio_clear(GPIOF, GPIO10);
-    msleep(1);
 
 #ifndef STRICT
     if (FSMC_NOR_PSRAM_16BITS)
@@ -83,7 +82,6 @@ int cart_mbc_peek(const uint8_t reg, uint8_t *val)
 
     /* SS */
     gpio_set(GPIOF, GPIO10);
-    msleep(1);
 
     return FIN;
 }
@@ -99,7 +97,6 @@ int cart_mbc_poke(const uint8_t reg, const uint8_t val)
 
     /* SS */
     gpio_clear(GPIOF, GPIO10);
-    msleep(1);
 
 #ifndef STRICT
     if (FSMC_NOR_PSRAM_16BITS)
@@ -110,7 +107,6 @@ int cart_mbc_poke(const uint8_t reg, const uint8_t val)
 
     /* SS */
     gpio_set(GPIOF, GPIO10);
-    msleep(1);
 
     return FIN;
 }
