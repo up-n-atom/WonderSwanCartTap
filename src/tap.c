@@ -109,6 +109,8 @@ static enum usbd_request_return_codes __tap_control_request(
         if (REG_MAX < (port + *len))
             *len = REG_MAX - port;
 
+        bzero(*buf, *len);
+
 #ifdef STRICT
         fsmc_bus_width_8();
 #endif
