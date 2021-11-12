@@ -257,6 +257,8 @@ void cart_clock_stop(void)
 
 void cart_delay(uint32_t cycles)
 {
+    if (!cycles) return;
+
     if (TIM_CR1(TIM3) & TIM_CR1_CEN) {
         timer_set_counter(TIM3, 0);
         while (timer_get_counter(TIM3) < cycles) __asm__("nop");
