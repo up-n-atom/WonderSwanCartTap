@@ -22,6 +22,7 @@
 
 #include <stddef.h>
 
+#include <libopencm3/stm32/desig.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 
@@ -42,7 +43,7 @@ static const struct usb_device_descriptor __dev_desc = {
     .bDeviceClass = 0xef, /* Miscellaneous Device */
     .bDeviceSubClass = 2, /* Common Class */
     .bDeviceProtocol = 1, /* Interface Association Descriptor */
-    .bMaxPacketSize0 = 32,
+    .bMaxPacketSize0 = 64,
 #if 1
     /* Todo: Register own id @ https://pid.codes/ */
     .idVendor = 0x0483,
@@ -154,18 +155,18 @@ static const struct usb_iface_assoc_descriptor __uart_assoc = {
 };
 
 static const struct usb_interface_descriptor __tap_iface = {
-	.bLength = USB_DT_INTERFACE_SIZE,
-	.bDescriptorType = USB_DT_INTERFACE,
-	.bInterfaceNumber = 2,
-	.bAlternateSetting = 0,
-	.bNumEndpoints = 0,
-	.bInterfaceClass = USB_CLASS_VENDOR,
-	.bInterfaceSubClass = 0,
-	.bInterfaceProtocol = 0,
+    .bLength = USB_DT_INTERFACE_SIZE,
+    .bDescriptorType = USB_DT_INTERFACE,
+    .bInterfaceNumber = 2,
+    .bAlternateSetting = 0,
+    .bNumEndpoints = 0,
+    .bInterfaceClass = USB_CLASS_VENDOR,
+    .bInterfaceSubClass = 0,
+    .bInterfaceProtocol = 0,
     .iInterface = 5, /* Strings index + 1 */
-	.endpoint = NULL,
-	.extra = NULL,
-	.extralen = 0
+    .endpoint = NULL,
+    .extra = NULL,
+    .extralen = 0,
 };
 
 static const struct usb_interface __ifaces[] = {{
@@ -203,13 +204,12 @@ static inline void __usb_reenumerate(void)
     msleep(3);
 }
 
+static char serial_no[13];
+
 static const char *__strings[] = {
     "Eleven, Twenty-two",
     "WonderSwan Cartridge Tap",
-#if 1
-    /* Todo: Use desig_get_unique_id_as_dfu() */
-    "SERIALNUM",
-#endif
+    serial_no,
     "WS Cart Tap UART",
     "WS Cart Tap TAP"
 };
@@ -225,6 +225,8 @@ usbd_device* usb_setup(void)
     __usb_reenumerate();
 
     rcc_periph_reset_pulse(RST_USB);
+
+    desig_get_unique_id_as_dfu(serial_no);
 
     dev = usbd_init(&st_usbfs_v1_usb_driver, &__dev_desc, &__config,
                     __strings, sizeof(__strings) / sizeof(char*),

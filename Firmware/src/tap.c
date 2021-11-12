@@ -81,6 +81,7 @@ static enum usbd_request_return_codes __tap_control_request(
         if (len && *len) {
             bzero(*buf, *len);
             **buf = ret;
+            *len = 1;
         }
 
         return USBD_REQ_HANDLED;
@@ -91,6 +92,8 @@ static enum usbd_request_return_codes __tap_control_request(
         bzero(*buf, *len);
 
         __dump_header((uint16_t *)*buf);
+
+        *len = 16;
 
         return USBD_REQ_HANDLED;
     }
