@@ -82,7 +82,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         return USBD_REQ_HANDLED;
     }
-    case TAP_PRTPOKE: {
+    case TAP_PORTPOKE: {
         uint8_t port = (uint8_t)req->wValue;
 
         if (REG_MIN > port) return USBD_REQ_NOTSUPP;
@@ -101,7 +101,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         return USBD_REQ_HANDLED;
     }
-    case TAP_PRTPEEK: {
+    case TAP_PORTPEEK: {
         uint8_t port = (uint8_t)req->wValue;
 
         if (REG_MIN > port) return USBD_REQ_NOTSUPP;
