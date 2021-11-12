@@ -22,6 +22,7 @@
 
 #include <stddef.h>
 
+#include <libopencm3/stm32/desig.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 
@@ -203,13 +204,12 @@ static inline void __usb_reenumerate(void)
     msleep(3);
 }
 
+static char serial_no[13];
+
 static const char *__strings[] = {
     "Eleven, Twenty-two",
     "WonderSwan Cartridge Tap",
-#if 1
-    /* Todo: Use desig_get_unique_id_as_dfu() */
-    "SERIALNUM",
-#endif
+    serial_no,
     "WS Cart Tap UART",
     "WS Cart Tap TAP"
 };
@@ -225,6 +225,8 @@ usbd_device* usb_setup(void)
     __usb_reenumerate();
 
     rcc_periph_reset_pulse(RST_USB);
+
+    desig_get_unique_id_as_dfu(serial_no);
 
     dev = usbd_init(&st_usbfs_v1_usb_driver, &__dev_desc, &__config,
                     __strings, sizeof(__strings) / sizeof(char*),
