@@ -86,6 +86,48 @@ static enum usbd_request_return_codes __tap_control_request(
 
         return USBD_REQ_HANDLED;
     }
+    case TAP_PRTPOKE: {
+        uint8_t port = (uint8_t)req->wValue;
+
+        if (REG_MIN > port) return USBD_REQ_NOTSUPP;
+
+        if (REG_MAX < (port + *len))
+            *len = REG_MAX - port;
+
+#ifdef STRICT
+        fsmc_bus_width_8();
+#endif
+
+        for (size_t i = 0; i < *len; ++i)
+            (void)cart_mbc_poke(port++, (*buf)[i]);
+
+#ifdef STRICT
+        fsmc_bus_width_16();
+#endif
+
+        return USBD_REQ_HANDLED;
+    }
+    case TAP_PRTPEEK: {
+        uint8_t port = (uint8_t)req->wValue;
+
+        if (REG_MIN > port) return USBD_REQ_NOTSUPP;
+
+        if (REG_MAX < (port + *len))
+            *len = REG_MAX - port;
+
+#ifdef STRICT
+        fsmc_bus_width_8();
+#endif
+
+        for (size_t i = 0; i < *len; ++i)
+            (void)cart_mbc_peek(port++, &(*buf)[i]);
+
+#ifdef STRICT
+        fsmc_bus_width_16();
+#endif
+
+        return USBD_REQ_HANDLED;
+    }
     case TAP_DUMPHDR:
         if (NULL == len || 16 > *len) return USBD_REQ_NOTSUPP;
 
