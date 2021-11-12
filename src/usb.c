@@ -42,7 +42,7 @@ static const struct usb_device_descriptor __dev_desc = {
     .bDeviceClass = 0xef, /* Miscellaneous Device */
     .bDeviceSubClass = 2, /* Common Class */
     .bDeviceProtocol = 1, /* Interface Association Descriptor */
-    .bMaxPacketSize0 = 32,
+    .bMaxPacketSize0 = 64,
 #if 1
     /* Todo: Register own id @ https://pid.codes/ */
     .idVendor = 0x0483,
