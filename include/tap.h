@@ -25,14 +25,14 @@
 
 enum tap_req {
     TAP_HANDSHK,
-    TAP_PRTPOKE,
+    TAP_PORTPOKE,
+    TAP_RAMPOKE,
     TAP_ROM0POKE,
     TAP_ROM1POKE,
-    TAP_RAMPOKE,
-    TAP_PRTPEEK,
+    TAP_PORTPEEK,
+    TAP_RAMPEEK,
     TAP_ROM0PEEK,
     TAP_ROM1PEEK,
-    TAP_RAMPEEK,
     /* Convenience methods */
     TAP_DUMPHDR = 0x10,
     TAP_DUMPROM,
