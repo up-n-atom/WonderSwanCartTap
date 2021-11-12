@@ -154,18 +154,18 @@ static const struct usb_iface_assoc_descriptor __uart_assoc = {
 };
 
 static const struct usb_interface_descriptor __tap_iface = {
-	.bLength = USB_DT_INTERFACE_SIZE,
-	.bDescriptorType = USB_DT_INTERFACE,
-	.bInterfaceNumber = 2,
-	.bAlternateSetting = 0,
-	.bNumEndpoints = 0,
-	.bInterfaceClass = USB_CLASS_VENDOR,
-	.bInterfaceSubClass = 0,
-	.bInterfaceProtocol = 0,
+    .bLength = USB_DT_INTERFACE_SIZE,
+    .bDescriptorType = USB_DT_INTERFACE,
+    .bInterfaceNumber = 2,
+    .bAlternateSetting = 0,
+    .bNumEndpoints = 0,
+    .bInterfaceClass = USB_CLASS_VENDOR,
+    .bInterfaceSubClass = 0,
+    .bInterfaceProtocol = 0,
     .iInterface = 5, /* Strings index + 1 */
-	.endpoint = NULL,
-	.extra = NULL,
-	.extralen = 0
+    .endpoint = NULL,
+    .extra = NULL,
+    .extralen = 0,
 };
 
 static const struct usb_interface __ifaces[] = {{
