@@ -69,7 +69,7 @@ static enum usbd_request_return_codes __tap_control_request(
     (void)dev;
     (void)complete;
 
-    if (req->wIndex != 3) return USBD_REQ_NEXT_CALLBACK;
+    if (req->wIndex != 2) return USBD_REQ_NEXT_CALLBACK;
 
     /* Only accept vendor request */
     if((req->bmRequestType & 0x7f) != (USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE)) return USBD_REQ_NOTSUPP;
