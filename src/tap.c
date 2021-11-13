@@ -85,16 +85,16 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_PORTPOKE: {
         uint8_t port = (uint8_t)req->wValue;
 
-        if (REG_MIN > port) return USBD_REQ_NOTSUPP;
+        if (REG_MIN > port || NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
 
-        if (REG_MAX < (port + *len))
+        if (REG_MAX < (port + *len - 1))
             *len = REG_MAX - port;
 
 #ifdef STRICT
         fsmc_bus_width_8();
 #endif
         for (size_t i = 0; i < *len; ++i)
-            (void)cart_mbc_poke(port++, (*buf)[i]);
+            (void)cart_mbc_poke(port++, *(*buf + i));
 #ifdef STRICT
         fsmc_bus_width_16();
 #endif
@@ -104,9 +104,9 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_PORTPEEK: {
         uint8_t port = (uint8_t)req->wValue;
 
-        if (REG_MIN > port) return USBD_REQ_NOTSUPP;
+        if (REG_MIN > port || NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
 
-        if (REG_MAX < (port + *len))
+        if (REG_MAX < (port + *len - 1))
             *len = REG_MAX - port;
 
         bzero(*buf, *len);
@@ -115,7 +115,7 @@ static enum usbd_request_return_codes __tap_control_request(
         fsmc_bus_width_8();
 #endif
         for (size_t i = 0; i < *len; ++i)
-            (void)cart_mbc_peek(port++, &(*buf)[i]);
+            (void)cart_mbc_peek(port++, *buf + i);
 #ifdef STRICT
         fsmc_bus_width_16();
 #endif
