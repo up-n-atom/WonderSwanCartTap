@@ -102,11 +102,14 @@ void fsmc_setup(void)
 
     /* Disable bank1 - enabled by default */
     FSMC_BCR1 &= ~FSMC_BCR_MBKEN;
-    FSMC_BCR2 = 0U | FSMC_BCR_MTYP_NOR | FSMC_BCR_MWID_16BITS | FSMC_BCR_FACCEN | FSMC_BCR_WREN;
+
+    FSMC_BCR2 = 0U | FSMC_BCR_MTYP_NOR | FSMC_BCR_MWID_16BITS | FSMC_BCR_EXTMOD | FSMC_BCR_FACCEN | FSMC_BCR_WREN;
     /* Ref. AN2784 - Using the high-density STM32F10xxx FSMC peripheral to drive external memories
        Table 3 */
-    FSMC_BTR2 = 0U | FSMC_BTR_ADDSETx(2) | FSMC_BTR_DATASTx(5) | FSMC_BTR_ACCMODx(FSMC_BTx_ACCMOD_B);
-    FSMC_BWTR2 = 0x0fffffffU;
+    FSMC_BTR2 = 0U | FSMC_BTR_ADDSETx(2) | FSMC_BTR_DATASTx(5) | FSMC_BTR_ACCMODx(FSMC_BTx_ACCMOD_C);
+    FSMC_BWTR2 = FSMC_BTR2;
+
+    /* Enable bank2 */
     FSMC_BCR2 |= FSMC_BCR_MBKEN;
 }
 
