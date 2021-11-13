@@ -59,12 +59,9 @@ static inline void __dump_header(uint16_t *buf)
 }
 
 static enum usbd_request_return_codes __tap_control_request(
-    usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
-    usbd_control_complete_callback *complete)
+    __attribute__((unused)) usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
+    __attribute__((unused)) usbd_control_complete_callback *complete)
 {
-    (void)dev;
-    (void)complete;
-
     if (req->wIndex != 2) return USBD_REQ_NEXT_CALLBACK;
 
     /* Only accept vendor request */
