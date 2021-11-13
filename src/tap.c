@@ -135,7 +135,7 @@ static enum usbd_request_return_codes __tap_control_request(
         bzero(*buf, *len);
 
         for (size_t i = 0; i < *len; i+=2)
-            (void)cart_nor_peek(addr | i, (uint16_t *)(*buf + i));
+            (void)cart_nor_peek(addr + i, (uint16_t *)(*buf + i));
 
         return USBD_REQ_HANDLED;
     }
