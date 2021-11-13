@@ -194,7 +194,7 @@ int cart_sram_poke(const uint32_t addr, const uint8_t val)
         /* enforce prior call to fsmc_toggle_bus_width() */
         return BADWIDTH;
 #else
-        __cart_write_word(addr, (uint16_t)val);
+        __cart_write_word(addr << 1, (uint16_t)val);
 #endif
     else
         __cart_write_byte(addr, val);
