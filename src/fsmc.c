@@ -120,7 +120,7 @@ void fsmc_reset(void)
     FSMC_BCR1 = 0x000030dbU; 
     FSMC_BCR2 = 0x000030d2U;
     FSMC_BTR2 = 0x0fffffffU;
-    FSMC_BWTR2 = 0x0fffffffU;
+    FSMC_BWTR2 = FSMC_BTR2;
 
     rcc_periph_clock_disable(RCC_FSMC);
 
