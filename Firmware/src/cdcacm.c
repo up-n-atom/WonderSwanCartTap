@@ -33,7 +33,7 @@ extern void uart_usb_out(usbd_device *dev, uint8_t ep);
 
 static enum usbd_request_return_codes cdcacm_control_request(
     usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
-    void (**complete)(usbd_device *dev, struct usb_setup_data *req))
+    usbd_control_complete_callback *complete)
 {
     (void)dev;
     (void)buf;

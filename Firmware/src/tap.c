@@ -59,12 +59,9 @@ static inline void __dump_header(uint16_t *buf)
 }
 
 static enum usbd_request_return_codes __tap_control_request(
-    usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
-    void (**complete)(usbd_device *usbd_dev, struct usb_setup_data *req))
+    __attribute__((unused)) usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
+    __attribute__((unused)) usbd_control_complete_callback *complete)
 {
-    (void)dev;
-    (void)complete;
-
     if (req->wIndex != 2) return USBD_REQ_NEXT_CALLBACK;
 
     /* Only accept vendor request */
@@ -82,42 +79,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         return USBD_REQ_HANDLED;
     }
-    case TAP_PORTPOKE: {
-        uint8_t port = (uint8_t)req->wValue;
-
-        if (REG_MIN > port || NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
-
-        if (REG_MAX < (port + *len - 1))
-            *len = REG_MAX - port;
-
-#ifdef STRICT
-        fsmc_bus_width_8();
-#endif
-        for (size_t i = 0; i < *len; ++i)
-            (void)cart_mbc_poke(port++, *(*buf + i));
-#ifdef STRICT
-        fsmc_bus_width_16();
-#endif
-
-        return USBD_REQ_HANDLED;
-    }
-    case TAP_RAMPOKE: {
-        uint16_t addr = req->wValue;
-
-        if (NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
-
-#ifdef STRICT
-        fsmc_bus_width_8();
-#endif
-        for (size_t i = 0; i < *len; ++i)
-            (void)cart_sram_poke(0x10000 | addr++, *(*buf + i));
-#ifdef STRICT
-        fsmc_bus_width_16();
-#endif
-
-        return USBD_REQ_HANDLED;
-    }
-    case TAP_PORTPEEK: {
+    case TAP_MBCPEEK: {
         uint8_t port = (uint8_t)req->wValue;
 
         if (REG_MIN > port || NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
@@ -150,6 +112,62 @@ static enum usbd_request_return_codes __tap_control_request(
 #endif
         for (size_t i = 0; i < *len; ++i)
             (void)cart_sram_peek(0x10000 | addr++, *buf + i);
+#ifdef STRICT
+        fsmc_bus_width_16();
+#endif
+
+        return USBD_REQ_HANDLED;
+    }
+    case TAP_R0MPEEK:
+        __attribute__((__fallthrough__));
+    case TAP_R1MPEEK: {
+        if (NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+
+        uint32_t addr = req->wValue;
+
+        if (addr % 2) return USBD_REQ_NOTSUPP;
+
+        if (0x10000 < (addr + *len - 1))
+            *len = 0x10000 - addr;
+
+        addr |= req->bRequest == TAP_R1MPEEK ? 0x30000 : 0x20000;
+
+        bzero(*buf, *len);
+
+        for (size_t i = 0; i < *len; i+=2)
+            (void)cart_nor_peek(addr | i, (uint16_t *)(*buf + i));
+
+        return USBD_REQ_HANDLED;
+    }
+    case TAP_MBCPOKE: {
+        uint8_t port = (uint8_t)req->wValue;
+
+        if (REG_MIN > port || NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+
+        if (REG_MAX < (port + *len - 1))
+            *len = REG_MAX - port;
+
+#ifdef STRICT
+        fsmc_bus_width_8();
+#endif
+        for (size_t i = 0; i < *len; ++i)
+            (void)cart_mbc_poke(port++, *(*buf + i));
+#ifdef STRICT
+        fsmc_bus_width_16();
+#endif
+
+        return USBD_REQ_HANDLED;
+    }
+    case TAP_RAMPOKE: {
+        uint16_t addr = req->wValue;
+
+        if (NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+
+#ifdef STRICT
+        fsmc_bus_width_8();
+#endif
+        for (size_t i = 0; i < *len; ++i)
+            (void)cart_sram_poke(0x10000 | addr++, *(*buf + i));
 #ifdef STRICT
         fsmc_bus_width_16();
 #endif
