@@ -110,11 +110,12 @@ void fsmc_setup(void)
 
 void fsmc_reset(void)
 {
-    /* No formal peripheral reset */
-    FSMC_BCR2 = 0U;
-    FSMC_BWTR2 = 0U;
-    FSMC_BTR2 = 0U;
-    FSMC_BCR2 = 0U;
+    /* No formal peripheral reset - reset values...
+       Ref. RM0008 - Section 21.5.6 */
+    FSMC_BCR1 = 0x000030dbU; 
+    FSMC_BCR2 = 0x000030d2U;
+    FSMC_BTR2 = 0x0fffffffU;
+    FSMC_BWTR2 = 0x0fffffffU;
 
     rcc_periph_clock_disable(RCC_FSMC);
 
