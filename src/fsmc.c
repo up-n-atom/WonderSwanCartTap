@@ -100,6 +100,8 @@ void fsmc_setup(void)
 
     rcc_periph_clock_enable(RCC_FSMC);
 
+    /* Disable bank1 - enabled by default */
+    FSMC_BCR1 &= ~FSMC_BCR_MBKEN;
     FSMC_BCR2 = 0U | FSMC_BCR_MTYP_NOR | FSMC_BCR_MWID_16BITS | FSMC_BCR_FACCEN | FSMC_BCR_WREN;
     /* Ref. AN2784 - Using the high-density STM32F10xxx FSMC peripheral to drive external memories
        Table 3 */
