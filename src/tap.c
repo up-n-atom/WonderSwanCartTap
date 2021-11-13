@@ -60,7 +60,7 @@ static inline void __dump_header(uint16_t *buf)
 
 static enum usbd_request_return_codes __tap_control_request(
     usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
-    void (**complete)(usbd_device *usbd_dev, struct usb_setup_data *req))
+    usbd_control_complete_callback *complete)
 {
     (void)dev;
     (void)complete;
