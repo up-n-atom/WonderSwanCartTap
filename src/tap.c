@@ -118,6 +118,27 @@ static enum usbd_request_return_codes __tap_control_request(
 
         return USBD_REQ_HANDLED;
     }
+    case TAP_R0MPEEK:
+        __attribute__((__fallthrough__));
+    case TAP_R1MPEEK: {
+        if (NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+
+        uint32_t addr = req->wValue;
+
+        if (addr % 2) return USBD_REQ_NOTSUPP;
+
+        if (0x10000 < (addr + *len - 1))
+            *len = 0x10000 - addr;
+
+        addr |= req->bRequest == TAP_R1MPEEK ? 0x30000 : 0x20000;
+
+        bzero(*buf, *len);
+
+        for (size_t i = 0; i < *len; i+=2)
+            (void)cart_nor_peek(addr | i, (uint16_t *)(*buf + i));
+
+        return USBD_REQ_HANDLED;
+    }
     case TAP_MBCPOKE: {
         uint8_t port = (uint8_t)req->wValue;
 
