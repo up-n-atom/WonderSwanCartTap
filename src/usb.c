@@ -154,6 +154,23 @@ static const struct usb_iface_assoc_descriptor __uart_assoc = {
     .iFunction = 0,
 };
 
+/* Mimic DFU descriptor */
+static const struct usb_tap_descriptor {
+    uint8_t bLength;
+    /* todo: define a descriptor type */
+    uint8_t bDescriptorType;
+    /* todo: define attributes */
+    uint8_t bmAttributes;
+    uint16_t wTransferSize;
+    uint16_t bcdTAPVersion;
+} __attribute__((packed)) __tap_func = {
+    .bLength = sizeof(struct usb_tap_descriptor),
+    .bDescriptorType = 0xff,
+    .bmAttributes = 0xff,
+    .wTransferSize = USB_CONTROL_BUF_SIZE,
+    .bcdTAPVersion = 0x0100,
+};
+
 static const struct usb_interface_descriptor __tap_iface = {
     .bLength = USB_DT_INTERFACE_SIZE,
     .bDescriptorType = USB_DT_INTERFACE,
@@ -165,8 +182,8 @@ static const struct usb_interface_descriptor __tap_iface = {
     .bInterfaceProtocol = 0,
     .iInterface = 5, /* Strings index + 1 */
     .endpoint = NULL,
-    .extra = NULL,
-    .extralen = 0,
+    .extra = &__tap_func,
+    .extralen = sizeof(__tap_func),
 };
 
 static const struct usb_interface __ifaces[] = {{
