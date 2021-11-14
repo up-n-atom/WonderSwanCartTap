@@ -92,7 +92,7 @@ static inline void __dump_header(uint16_t *buf)
     fsmc_bus_width_16();
 #endif
 
-    for (size_t i = 0; i < 16; i+=2)
+    for (uint8_t i = 0; i < 16; i+=2)
         (void)cart_nor_peek(0x2fff0 | i, buf++);
 
 #ifdef STRICT
@@ -153,7 +153,7 @@ static enum usbd_request_return_codes __tap_control_request(
 #ifdef STRICT
         fsmc_bus_width_8();
 #endif
-        for (size_t i = 0; i < *len; ++i)
+        for (uint8_t i = 0; i < *len; ++i)
             (void)cart_mbc_peek(port++, *buf + i);
 #ifdef STRICT
         fsmc_bus_width_16();
@@ -175,7 +175,7 @@ static enum usbd_request_return_codes __tap_control_request(
 #ifdef STRICT
         fsmc_bus_width_8();
 #endif
-        for (size_t i = 0; i < *len; ++i)
+        for (uint16_t i = 0; i < *len; ++i)
             (void)cart_sram_peek(0x10000 | addr++, *buf + i);
 #ifdef STRICT
         fsmc_bus_width_16();
@@ -203,7 +203,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         addr |= req->bRequest == TAP_R1MPEEK ? 0x30000 : 0x20000;
 
-        for (size_t i = 0; i < *len; i+=2)
+        for (uint16_t i = 0; i < *len; i+=2)
             (void)cart_nor_peek(addr + i, (uint16_t *)(*buf + i));
 
         return USBD_REQ_HANDLED;
@@ -227,7 +227,7 @@ static enum usbd_request_return_codes __tap_control_request(
 #ifdef STRICT
         fsmc_bus_width_8();
 #endif
-        for (size_t i = 0; i < *len; ++i)
+        for (uint8_t i = 0; i < *len; ++i)
             (void)cart_mbc_poke(port++, *(*buf + i));
 #ifdef STRICT
         fsmc_bus_width_16();
@@ -249,7 +249,7 @@ static enum usbd_request_return_codes __tap_control_request(
 #ifdef STRICT
         fsmc_bus_width_8();
 #endif
-        for (size_t i = 0; i < *len; ++i)
+        for (uint16_t i = 0; i < *len; ++i)
             (void)cart_sram_poke(0x10000 | addr++, *(*buf + i));
 #ifdef STRICT
         fsmc_bus_width_16();
