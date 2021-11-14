@@ -113,6 +113,9 @@ static enum usbd_request_return_codes __tap_control_request(
     /* Only accept vendor request */
     if((req->bmRequestType & 0x7f) != (USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE)) return USBD_REQ_NOTSUPP;
 
+    /* Ignore any leveled requests until the error is acknowledged and cleared */
+    if (__get_state() == TAP_ST8_ERROR && req->bRequest > TAP_CLRERR) return USBD_REQ_HANDLED;
+
     switch(req->bRequest) {
     case TAP_GETST8:
         if (len && *len) {
