@@ -23,7 +23,6 @@
 #ifndef TAP_H
 #define TAP_H
 
-
 enum tap_state {
     TAP_ST8_IDLE,
     TAP_ST8_BUSY,
