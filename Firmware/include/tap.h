@@ -23,8 +23,31 @@
 #ifndef TAP_H
 #define TAP_H
 
-enum tap_req {
-    TAP_HANDSHK,
+
+enum tap_state {
+    TAP_ST8_IDLE,
+    TAP_ST8_BUSY,
+    TAP_ST8_ERROR,
+};
+
+enum tap_error {
+    TAP_ERR_NONE,
+    TAP_ERR_CART,
+    /* Synonymous for read */
+    TAP_ERR_PEEK,
+    /* Synonymous for write */
+    TAP_ERR_POKE,
+    TAP_ERR_ADDR,
+    TAP_ERR_DATA,
+};
+
+enum tap_request {
+    /* Status requests */
+    TAP_GETST8,
+    TAP_GETERR,
+    TAP_CLRERR,
+    /* Low-level requests */
+    TAP_HANDSHK = 11,
     TAP_MBCPEEK,
     TAP_RAMPEEK,
     TAP_R0MPEEK,
@@ -33,8 +56,8 @@ enum tap_req {
     TAP_RAMPOKE,
     TAP_R0MPOKE,
     TAP_R1MPOKE,
-    /* Convenience methods */
-    TAP_DUMPHDR = 0x10,
+    /* High-level requests */
+    TAP_DUMPHDR = 22,
     TAP_DUMPROM,
     TAP_DUMPRAM,
     TAP_DUMPEEP,

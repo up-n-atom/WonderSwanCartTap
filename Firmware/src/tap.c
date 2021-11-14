@@ -20,7 +20,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#include <strings.h>
+#include <stddef.h>
 
 #include <libopencm3/stm32/fsmc.h>
 
@@ -31,6 +31,52 @@
 #include "tap.h"
 #include "timer.h"
 #include "usb.h"
+
+static struct {
+    struct {
+        uint8_t buf[USB_CONTROL_BUF_SIZE];
+        uint16_t len;
+    } dat;
+    enum tap_state st8;
+    enum tap_error err;
+} __ctx = {
+    .dat = {{0}, 0},
+    .st8 = TAP_ST8_IDLE,
+    .err = TAP_ERR_NONE,
+};
+
+__attribute__((always_inline))
+static inline enum tap_state __get_state(void)
+{
+    return __ctx.st8;
+}
+
+__attribute__((always_inline))
+static inline void __set_state(enum tap_state st8)
+{
+    __ctx.st8 = st8;
+}
+
+__attribute__((always_inline))
+static inline enum tap_error __get_error(void)
+{
+    return __ctx.err;
+}
+
+__attribute__((always_inline))
+static inline void __set_error(enum tap_error err)
+{
+    __ctx.err = err;
+}
+
+__attribute__((always_inline))
+static inline void __set_error_state(enum tap_error err)
+{
+    __set_error(err);
+
+    if (err)
+        __set_state(TAP_ST8_ERROR);
+}
 
 __attribute__((always_inline))
 static inline void __dump_header(uint16_t *buf)
@@ -68,26 +114,41 @@ static enum usbd_request_return_codes __tap_control_request(
     if((req->bmRequestType & 0x7f) != (USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE)) return USBD_REQ_NOTSUPP;
 
     switch(req->bRequest) {
-    case TAP_HANDSHK: {
-        int ret = cart_handshake();
-
+    case TAP_GETST8:
         if (len && *len) {
-            bzero(*buf, *len);
-            **buf = ret;
+            **buf = __get_state();
             *len = 1;
-        }
-
+        } /* else... No errors generated */
+        return USBD_REQ_HANDLED;
+    case TAP_GETERR:
+        if (len && *len) {
+            **buf = __get_error();
+            *len = 1;
+        } /* else... No error override */
+        return USBD_REQ_HANDLED;
+    case TAP_CLRERR:
+        __set_error_state(TAP_ERR_NONE);
+        return USBD_REQ_HANDLED;
+    case TAP_HANDSHK: {
+        if (cart_handshake())
+            __set_error_state(TAP_ERR_CART);
         return USBD_REQ_HANDLED;
     }
     case TAP_MBCPEEK: {
+        if (NULL == len || 0 == *len) {
+            __set_error_state(TAP_ERR_DATA);
+            return USBD_REQ_HANDLED;
+        }
+
         uint8_t port = (uint8_t)req->wValue;
 
-        if (REG_MIN > port || NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+        if (REG_MIN > port) {
+            __set_error_state(TAP_ERR_ADDR);
+            return USBD_REQ_HANDLED;
+        }
 
         if (REG_MAX < (port + *len - 1))
             *len = REG_MAX - port;
-
-        bzero(*buf, *len);
 
 #ifdef STRICT
         fsmc_bus_width_8();
@@ -101,11 +162,15 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_RAMPEEK: {
+        if (NULL == len || 0 == *len) {
+            __set_error_state(TAP_ERR_DATA);
+            return USBD_REQ_HANDLED;
+        }
+
         uint16_t addr = req->wValue;
 
-        if (NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
-
-        bzero(*buf, *len);
+        if (0x10000 < (addr + *len - 1))
+            *len = 0x10000 - addr;
 
 #ifdef STRICT
         fsmc_bus_width_8();
@@ -121,18 +186,22 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_R0MPEEK:
         __attribute__((__fallthrough__));
     case TAP_R1MPEEK: {
-        if (NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+        if (NULL == len || 2 > *len) {
+            __set_error_state(TAP_ERR_DATA);
+            return USBD_REQ_HANDLED;
+        }
 
         uint32_t addr = req->wValue;
 
-        if (addr % 2) return USBD_REQ_NOTSUPP;
+        if (addr % 2) {
+            __set_error_state(TAP_ERR_ADDR);
+            return USBD_REQ_HANDLED;
+        }
 
-        if (0x10000 < (addr + *len - 1))
+        if (0x10000 < (addr + *len - 2))
             *len = 0x10000 - addr;
 
         addr |= req->bRequest == TAP_R1MPEEK ? 0x30000 : 0x20000;
-
-        bzero(*buf, *len);
 
         for (size_t i = 0; i < *len; i+=2)
             (void)cart_nor_peek(addr + i, (uint16_t *)(*buf + i));
@@ -140,9 +209,17 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_MBCPOKE: {
+        if (NULL == len || 0 == *len) {
+            __set_error_state(TAP_ERR_DATA);
+            return USBD_REQ_HANDLED;
+        }
+
         uint8_t port = (uint8_t)req->wValue;
 
-        if (REG_MIN > port || NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+        if (REG_MIN > port) {
+            __set_error_state(TAP_ERR_ADDR);
+            return USBD_REQ_HANDLED;
+        }
 
         if (REG_MAX < (port + *len - 1))
             *len = REG_MAX - port;
@@ -159,9 +236,15 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_RAMPOKE: {
+        if (NULL == len || 0 == *len) {
+            __set_error_state(TAP_ERR_DATA);
+            return USBD_REQ_HANDLED;
+        }
+
         uint16_t addr = req->wValue;
 
-        if (NULL == len || 0 == *len) return USBD_REQ_NOTSUPP;
+        if (0x10000 < (addr + *len - 1))
+            *len = 0x10000 - addr;
 
 #ifdef STRICT
         fsmc_bus_width_8();
@@ -175,12 +258,12 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_DUMPHDR:
-        if (NULL == len || 16 > *len) return USBD_REQ_NOTSUPP;
-
-        bzero(*buf, *len);
+        if (NULL == len || 16 > *len) {
+            __set_error_state(TAP_ERR_DATA);
+            return USBD_REQ_HANDLED;
+        }
 
         __dump_header((uint16_t *)*buf);
-
         *len = 16;
 
         return USBD_REQ_HANDLED;
