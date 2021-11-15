@@ -73,6 +73,44 @@
 #define XFER_WIDTH 24
 #define SECRET_WIDTH 18
 
+struct cart_header {
+    struct {
+        uint8_t opcode;
+        union {
+          uint32_t iaddr;
+          struct {
+              uint16_t seg;
+              uint16_t off;
+          } saddr __attribute__((packed));
+        };
+    } jmpf __attribute__((packed));
+    /* fixed data */
+    uint8_t nil;
+    struct {
+        /* maker code */
+        uint8_t pub;
+        uint8_t sys;
+        /* title code */
+        uint8_t id;
+    } ser; /* SWJ-<PUB><SYS><ID> */
+    /* version */
+    uint8_t ver;
+    /* rom size */
+    uint8_t rom_sz;
+    /* xram/xerom size */
+    uint8_t sav_sz;
+    /* bootloader */
+    struct {
+        uint8_t bspeed : 1;
+        uint8_t bwidth : 1;
+        uint8_t orient : 1;
+    } flags;
+    /* sub-system lsi */
+    uint8_t lsi;
+    /* checksum */
+    uint16_t csum;
+} __attribute__((packed));
+
 void cart_clock_start(void);
 
 void cart_clock_stop(void);
