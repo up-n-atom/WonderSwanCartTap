@@ -76,38 +76,40 @@
 struct cart_header {
     struct {
         uint8_t opcode;
+        /* Anonymous union -std=c11 */
         union {
           uint32_t iaddr;
           struct {
-              uint16_t seg;
               uint16_t off;
-          } saddr __attribute__((packed));
-        };
-    } jmpf __attribute__((packed));
-    /* fixed data */
+              uint16_t seg;
+          } __attribute__((packed)) saddr;
+        } __attribute__((packed));
+    } __attribute__((packed)) jmpf;
+    /* Fixed data */
     uint8_t nil;
+    /* SWJ-<PUB><SYS><ID> */
     struct {
-        /* maker code */
+        /* Maker Code */
         uint8_t pub;
         uint8_t sys;
-        /* title code */
+        /* Title Code */
         uint8_t id;
-    } ser; /* SWJ-<PUB><SYS><ID> */
-    /* version */
+    } __attribute__((packed)) ser;
+    /* Version */
     uint8_t ver;
-    /* rom size */
+    /* ROM Size */
     uint8_t rom_sz;
-    /* xram/xerom size */
+    /* XRAM/XEROM Size */
     uint8_t sav_sz;
-    /* bootloader */
+    /* Bootloader */
     struct {
-        uint8_t bspeed : 1;
-        uint8_t bwidth : 1;
         uint8_t orient : 1;
-    } flags;
-    /* sub-system lsi */
+        uint8_t bwidth : 1;
+        uint8_t bspeed : 1;
+    } __attribute__((packed)) flags;
+    /* Sub-System LSI */
     uint8_t lsi;
-    /* checksum */
+    /* Checksum */
     uint16_t csum;
 } __attribute__((packed));
 
