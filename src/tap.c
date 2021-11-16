@@ -20,7 +20,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#include <stddef.h>
+#include <string.h>
 
 #include <libopencm3/stm32/fsmc.h>
 
@@ -294,8 +294,12 @@ static enum usbd_request_return_codes __tap_control_request(
             __dump_header((uint8_t *)hdr);
 
             if (hdr->jmpf.opcode != 0xea) {
+                bzero(__ctx.dat.buf, 16);
+
                 __set_error_state(TAP_ERR_PEEK);
+
                 *len = 0;
+
                 return USBD_REQ_HANDLED;
             }
         }
@@ -306,7 +310,10 @@ static enum usbd_request_return_codes __tap_control_request(
             uint16_t bank = (256 - __banks[hdr->rom_sz]) + (req->wValue / 64);
 
             if (bank > 0xff) {
+                bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
+
                 *len = 0;
+
                  return USBD_REQ_HANDLED;
             } else {
                 (void)cart_mbc_poke(REG_ROM_BANK_0, bank);
