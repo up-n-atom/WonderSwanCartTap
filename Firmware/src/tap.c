@@ -79,7 +79,7 @@ static inline void __set_error_state(enum tap_error err)
 }
 
 __attribute__((always_inline))
-static inline void __dump_header(uint16_t *buf)
+static inline void __dump_header(uint8_t *buf)
 {
     uint8_t rb0 = 0;
 
@@ -93,7 +93,15 @@ static inline void __dump_header(uint16_t *buf)
 #endif
 
     for (uint8_t i = 0; i < 16; i+=2)
-        (void)cart_nor_peek(0x2fff0 | i, buf++);
+        (void)cart_nor_peek(0x2fff0 | i, (uint16_t *)(buf + i));
+
+    struct cart_header *hdr = (struct cart_header *)buf;
+
+    if (hdr->flags.bwidth) {
+        fsmc_bus_width_8();
+        for (uint8_t i = 1; i < 16; i+=2)
+            (void)cart_nor_peek(0x2fff0 | i, (uint16_t *)(buf + i));
+    }
 
 #ifdef STRICT
     fsmc_bus_width_8();
@@ -114,7 +122,7 @@ static enum usbd_request_return_codes __tap_control_request(
     if((req->bmRequestType & 0x7f) != (USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE)) return USBD_REQ_NOTSUPP;
 
     /* Ignore any leveled requests until the error is acknowledged and cleared */
-    if (__get_state() == TAP_ST8_ERROR && req->bRequest > TAP_CLRERR) return USBD_REQ_HANDLED;
+    //if (__get_state() == TAP_ST8_ERROR && req->bRequest > TAP_CLRERR) return USBD_REQ_HANDLED;
 
     switch(req->bRequest) {
     case TAP_GETST8:
@@ -270,11 +278,55 @@ static enum usbd_request_return_codes __tap_control_request(
             return USBD_REQ_HANDLED;
         }
 
-        __dump_header((uint16_t *)*buf);
+        __dump_header(*buf);
         *len = 16;
 
         return USBD_REQ_HANDLED;
-    }
+    case TAP_DUMPROM: {
+        if (NULL == len || USB_CONTROL_BUF_SIZE != *len) {
+            __set_error_state(TAP_ERR_DATA);
+            return USBD_REQ_HANDLED;
+        }
+
+        struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
+
+        if (req->wValue == 0) {
+            __dump_header((uint8_t *)hdr);
+
+            if (hdr->jmpf.opcode != 0xea) {
+                __set_error_state(TAP_ERR_PEEK);
+                *len = 0;
+                return USBD_REQ_HANDLED;
+            }
+        }
+
+        if (!(req->wValue % 64)) {
+            static const uint16_t __banks[10] = {0, 4, 8, 16, 32, 0, 64, 0, 128, 256};
+
+            uint16_t bank = (256 - __banks[hdr->rom_sz]) + (req->wValue / 64);
+
+            if (bank > 0xff) {
+                *len = 0;
+                 return USBD_REQ_HANDLED;
+            } else {
+                (void)cart_mbc_poke(REG_ROM_BANK_0, bank);
+            }
+        }
+
+        uint32_t addr = ROM0_BASE + ((req->wValue % 64) * USB_CONTROL_BUF_SIZE);
+
+        if (hdr->flags.bwidth) {
+            fsmc_bus_width_8();
+            for (uint16_t i = 0; i < *len; ++i)
+                (void)cart_nor_peek(addr++, (uint16_t *)(*buf + i));
+            fsmc_bus_width_16();
+        } else {
+            for (uint16_t i = 0; i < *len; i+=2)
+                (void)cart_nor_peek(addr + i, (uint16_t *)(*buf + i));
+        }
+
+        return USBD_REQ_HANDLED;
+    }}
 
     return USBD_REQ_NOTSUPP;
 }
