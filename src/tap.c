@@ -76,6 +76,9 @@ static inline void __set_error_state(enum tap_error err)
 
     if (err)
         __set_state(TAP_ST8_ERROR);
+    else
+        if (__get_state() == TAP_ST8_ERROR)
+            __set_state(TAP_ST8_IDLE);
 }
 
 __attribute__((always_inline))
