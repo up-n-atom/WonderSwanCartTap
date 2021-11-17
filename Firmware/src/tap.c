@@ -79,7 +79,7 @@ static inline void __set_error_state(enum tap_error err)
 }
 
 __attribute__((always_inline))
-static inline void __dump_header(uint8_t *buf)
+static inline int __dump_header(uint8_t *buf)
 {
     uint8_t rb0 = 0;
 
@@ -110,6 +110,8 @@ static inline void __dump_header(uint8_t *buf)
 #ifdef STRICT
     fsmc_bus_width_16();
 #endif
+
+    return sizeof(struct cart_header);
 }
 
 __attribute__((always_inline))
@@ -120,7 +122,7 @@ static inline int __dump_rom(const uint32_t idx, uint8_t *buf)
     struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
 
     if (!idx) {
-         __dump_header((uint8_t *)hdr);
+         (void)__dump_header((uint8_t *)hdr);
 
         if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > (sizeof(cart_rom_sz) / sizeof(cart_rom_sz[0])))) {
             bzero(__ctx.dat.buf, sizeof(struct cart_header));
@@ -167,7 +169,7 @@ static inline int __dump_ram(const uint32_t idx, uint8_t *buf)
     struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
 
     if (!idx) {
-        __dump_header((uint8_t *)hdr);
+        (void)__dump_header((uint8_t *)hdr);
 
         if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > (sizeof(cart_sav_sz) / sizeof(cart_sav_sz[0])))) {
             bzero(__ctx.dat.buf, sizeof(struct cart_header));
@@ -365,16 +367,17 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_DUMPHDR:
         if ((NULL == len) || (sizeof(struct cart_header) > *len)) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
-        __dump_header(*buf);
-        *len = sizeof(struct cart_header);
+        *len = __dump_header(*buf);
 
         return USBD_REQ_HANDLED;
     case TAP_DUMPROM: {
         if ((NULL == len) || (USB_CONTROL_BUF_SIZE != *len)) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -385,6 +388,7 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_DUMPRAM: {
         if (NULL == len || USB_CONTROL_BUF_SIZE != *len) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
