@@ -122,7 +122,7 @@ static inline int __dump_rom(const uint32_t idx, uint8_t *buf)
     struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
 
     if (!idx) {
-         __dump_header((uint8_t *)hdr);
+         (void)__dump_header((uint8_t *)hdr);
 
         if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > (sizeof(cart_rom_sz) / sizeof(cart_rom_sz[0])))) {
             bzero(__ctx.dat.buf, sizeof(struct cart_header));
@@ -169,7 +169,7 @@ static inline int __dump_ram(const uint32_t idx, uint8_t *buf)
     struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
 
     if (!idx) {
-        __dump_header((uint8_t *)hdr);
+        (void)__dump_header((uint8_t *)hdr);
 
         if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > (sizeof(cart_sav_sz) / sizeof(cart_sav_sz[0])))) {
             bzero(__ctx.dat.buf, sizeof(struct cart_header));
