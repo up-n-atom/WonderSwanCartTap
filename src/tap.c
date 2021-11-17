@@ -112,6 +112,93 @@ static inline void __dump_header(uint8_t *buf)
 #endif
 }
 
+__attribute__((always_inline))
+static inline int __dump_rom(const uint32_t idx, uint8_t *buf)
+{
+    uint16_t len = USB_CONTROL_BUF_SIZE;
+
+    struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
+
+    if (!idx) {
+         __dump_header((uint8_t *)hdr);
+
+        if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > (sizeof(cart_rom_sz) / sizeof(cart_rom_sz[0])))) {
+            bzero(__ctx.dat.buf, sizeof(struct cart_header));
+            __set_error_state(TAP_ERR_PEEK);
+            return 0;
+        }
+    }
+
+    const uint32_t abs_addr = idx << 10;
+
+    if (cart_rom_sz[hdr->rom_sz] <= abs_addr) {
+        bzero(__ctx.dat.buf, sizeof(struct cart_header));
+        return 0;
+    } else if (cart_rom_sz[hdr->rom_sz] < ((abs_addr + len) - 1)) {
+        len = cart_rom_sz[hdr->rom_sz] - abs_addr;
+    }
+
+    uint32_t rel_addr = idx % 64;
+
+    if (!rel_addr)
+        (void)cart_mbc_poke(REG_ROM_BANK_0, ((256 - (cart_rom_sz[hdr->rom_sz] >> 16)) + (abs_addr >> 16)));
+
+    rel_addr <<= 10;
+    rel_addr |= ROM0_BASE;
+
+    if (hdr->flags.bwidth) {
+        fsmc_bus_width_8();
+        for (uint16_t i = 0; i < len; ++i)
+            (void)cart_nor_peek(rel_addr++, (uint16_t *)(buf + i));
+        fsmc_bus_width_16();
+    } else {
+        for (uint16_t i = 0; i < len; i+=2)
+            (void)cart_nor_peek(rel_addr + i, (uint16_t *)(buf + i));
+    }
+
+    return len;
+}
+
+__attribute__((always_inline))
+static inline int __dump_ram(const uint32_t idx, uint8_t *buf)
+{
+    uint16_t len = USB_CONTROL_BUF_SIZE;
+
+    struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
+
+    if (!idx) {
+        __dump_header((uint8_t *)hdr);
+
+        if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > (sizeof(cart_sav_sz) / sizeof(cart_sav_sz[0])))) {
+            bzero(__ctx.dat.buf, sizeof(struct cart_header));
+            __set_error_state(TAP_ERR_PEEK);
+            return 0;
+        }
+    }
+
+    const uint32_t abs_addr = idx << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
+
+    if (cart_sav_sz[hdr->sav_sz] <= abs_addr) {
+        bzero(__ctx.dat.buf, sizeof(struct cart_header));
+        return 0;
+    } else if (cart_sav_sz[hdr->sav_sz] < ((abs_addr + len) - 1)) {
+        len = cart_sav_sz[hdr->sav_sz] - abs_addr;
+    }
+
+    uint32_t rel_addr = idx % 64;
+
+    if (!rel_addr)
+        (void)cart_mbc_poke(REG_RAM_BANK, ((256 - (cart_sav_sz[hdr->sav_sz] >> 16)) + (abs_addr >> 16)));
+
+    rel_addr <<= 10;
+    rel_addr |= SRAM_BASE;
+
+    for (uint16_t i = 0; i < len; ++i)
+        (void)cart_sram_peek(rel_addr + i, buf + i);
+
+    return len;
+}
+
 static enum usbd_request_return_codes __tap_control_request(
     __attribute__((unused)) usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
     __attribute__((unused)) usbd_control_complete_callback *complete)
@@ -291,46 +378,7 @@ static enum usbd_request_return_codes __tap_control_request(
             return USBD_REQ_HANDLED;
         }
 
-        struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
-
-        if (!req->wValue) {
-            __dump_header((uint8_t *)hdr);
-
-            if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > (sizeof(cart_rom_sz) / sizeof(cart_rom_sz[0])))) {
-                bzero(__ctx.dat.buf, sizeof(struct cart_header));
-                __set_error_state(TAP_ERR_PEEK);
-                *len = 0;
-                return USBD_REQ_HANDLED;
-            }
-        }
-
-        const uint32_t abs_addr = req->wValue << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
-
-        if (cart_rom_sz[hdr->rom_sz] <= abs_addr) {
-            bzero(__ctx.dat.buf, sizeof(struct cart_header));
-            *len = 0;
-            return USBD_REQ_HANDLED;
-        } else if (cart_rom_sz[hdr->rom_sz] < ((abs_addr + *len) - 1)) {
-            *len = cart_rom_sz[hdr->rom_sz] - abs_addr;
-        }
-
-        uint32_t rel_addr = req->wValue % 64;
-
-        if (!rel_addr)
-            (void)cart_mbc_poke(REG_ROM_BANK_0, ((256 - (cart_rom_sz[hdr->rom_sz] >> 16)) + (abs_addr >> 16)));
-
-        rel_addr <<= 10;
-        rel_addr |= ROM0_BASE;
-
-        if (hdr->flags.bwidth) {
-            fsmc_bus_width_8();
-            for (uint16_t i = 0; i < *len; ++i)
-                (void)cart_nor_peek(rel_addr++, (uint16_t *)(*buf + i));
-            fsmc_bus_width_16();
-        } else {
-            for (uint16_t i = 0; i < *len; i+=2)
-                (void)cart_nor_peek(rel_addr + i, (uint16_t *)(*buf + i));
-        }
+        *len = __dump_rom(req->wValue, *buf);
 
         return USBD_REQ_HANDLED;
     }
@@ -340,39 +388,7 @@ static enum usbd_request_return_codes __tap_control_request(
             return USBD_REQ_HANDLED;
         }
 
-        struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
-
-        if (req->wValue == 0) {
-            __dump_header((uint8_t *)hdr);
-
-            if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > (sizeof(cart_sav_sz) / sizeof(cart_sav_sz[0])))) {
-                bzero(__ctx.dat.buf, sizeof(struct cart_header));
-                __set_error_state(TAP_ERR_PEEK);
-                *len = 0;
-                return USBD_REQ_HANDLED;
-            }
-        }
-
-        const uint32_t abs_addr = req->wValue << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
-
-        if (cart_sav_sz[hdr->sav_sz] <= abs_addr) {
-            bzero(__ctx.dat.buf, sizeof(struct cart_header));
-            *len = 0;
-            return USBD_REQ_HANDLED;
-        } else if (cart_sav_sz[hdr->sav_sz] < ((abs_addr + *len) - 1)) {
-            *len = cart_sav_sz[hdr->sav_sz] - abs_addr;
-        }
-
-        uint32_t rel_addr = req->wValue % 64;
-
-        if (!rel_addr)
-            (void)cart_mbc_poke(REG_RAM_BANK, ((256 - (cart_sav_sz[hdr->sav_sz] >> 16)) + (abs_addr >> 16)));
-
-        rel_addr <<= 10;
-        rel_addr |= SRAM_BASE;
-
-        for (uint16_t i = 0; i < *len; ++i)
-            (void)cart_sram_peek(rel_addr + i, *buf + i);
+        *len = __dump_ram(req->wValue, *buf);
 
         return USBD_REQ_HANDLED;
     }}
