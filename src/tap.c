@@ -83,6 +83,8 @@ static inline void __dump_header(uint8_t *buf)
 {
     uint8_t rb0 = 0;
 
+    struct cart_header *hdr = (struct cart_header *)buf;
+
 #ifdef STRICT
     fsmc_bus_width_8();
 #endif
@@ -92,14 +94,12 @@ static inline void __dump_header(uint8_t *buf)
     fsmc_bus_width_16();
 #endif
 
-    for (uint8_t i = 0; i < 16; i+=2)
+    for (uint8_t i = 0; i < sizeof(struct cart_header); i+=2)
         (void)cart_nor_peek(0x2fff0 | i, (uint16_t *)(buf + i));
-
-    struct cart_header *hdr = (struct cart_header *)buf;
 
     if (hdr->flags.bwidth) {
         fsmc_bus_width_8();
-        for (uint8_t i = 1; i < 16; i+=2)
+        for (uint8_t i = 1; i < sizeof(struct cart_header); i+=2)
             (void)cart_nor_peek(0x2fff0 | i, (uint16_t *)(buf + i));
     }
 
