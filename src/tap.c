@@ -293,13 +293,10 @@ static enum usbd_request_return_codes __tap_control_request(
         if (req->wValue == 0) {
             __dump_header((uint8_t *)hdr);
 
-            if (hdr->jmpf.opcode != 0xea) {
+            if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > 9)) {
                 bzero(__ctx.dat.buf, 16);
-
                 __set_error_state(TAP_ERR_PEEK);
-
                 *len = 0;
-
                 return USBD_REQ_HANDLED;
             }
         }
@@ -311,9 +308,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
             if (bank > 0xff) {
                 bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
-
                 *len = 0;
-
                  return USBD_REQ_HANDLED;
             } else {
                 (void)cart_mbc_poke(REG_ROM_BANK_0, bank);
