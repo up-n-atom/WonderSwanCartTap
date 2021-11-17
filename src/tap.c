@@ -276,13 +276,13 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_DUMPHDR:
-        if ((NULL == len) || (16 > *len)) {
+        if ((NULL == len) || (sizeof(struct cart_header) > *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
 
         __dump_header(*buf);
-        *len = 16;
+        *len = sizeof(struct cart_header);
 
         return USBD_REQ_HANDLED;
     case TAP_DUMPROM: {
@@ -297,7 +297,7 @@ static enum usbd_request_return_codes __tap_control_request(
             __dump_header((uint8_t *)hdr);
 
             if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > (sizeof(cart_rom_sz) / sizeof(cart_rom_sz[0])))) {
-                bzero(__ctx.dat.buf, 16);
+                bzero(__ctx.dat.buf, sizeof(struct cart_header));
                 __set_error_state(TAP_ERR_PEEK);
                 *len = 0;
                 return USBD_REQ_HANDLED;
@@ -307,7 +307,7 @@ static enum usbd_request_return_codes __tap_control_request(
         const uint32_t abs_addr = req->wValue << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
 
         if (cart_rom_sz[hdr->rom_sz] <= abs_addr) {
-            bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
+            bzero(__ctx.dat.buf, sizeof(struct cart_header));
             *len = 0;
             return USBD_REQ_HANDLED;
         } else if (cart_rom_sz[hdr->rom_sz] < ((abs_addr + *len) - 1)) {
@@ -346,7 +346,7 @@ static enum usbd_request_return_codes __tap_control_request(
             __dump_header((uint8_t *)hdr);
 
             if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > (sizeof(cart_sav_sz) / sizeof(cart_sav_sz[0])))) {
-                bzero(__ctx.dat.buf, 16);
+                bzero(__ctx.dat.buf, sizeof(struct cart_header));
                 __set_error_state(TAP_ERR_PEEK);
                 *len = 0;
                 return USBD_REQ_HANDLED;
@@ -356,7 +356,7 @@ static enum usbd_request_return_codes __tap_control_request(
         const uint32_t abs_addr = req->wValue << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
 
         if (cart_sav_sz[hdr->sav_sz] <= abs_addr) {
-            bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
+            bzero(__ctx.dat.buf, sizeof(struct cart_header));
             *len = 0;
             return USBD_REQ_HANDLED;
         } else if (cart_sav_sz[hdr->sav_sz] < ((abs_addr + *len) - 1)) {
