@@ -260,6 +260,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         if (REG_MIN > port) {
             __set_error_state(TAP_ERR_ADDR);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -306,6 +307,7 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_R1MPEEK: {
         if (NULL == len || 2 > *len) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -313,6 +315,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         if (addr % 2) {
             __set_error_state(TAP_ERR_ADDR);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -381,16 +384,15 @@ static enum usbd_request_return_codes __tap_control_request(
         *len = __dump_header(*buf, *len);
 
         return USBD_REQ_HANDLED;
-    case TAP_DUMPROM: {
+    case TAP_DUMPROM:
         *len = __dump_rom(req->wValue, *buf, *len);
 
         return USBD_REQ_HANDLED;
-    }
-    case TAP_DUMPRAM: {
+    case TAP_DUMPRAM:
         *len = __dump_ram(req->wValue, *buf, *len);
 
         return USBD_REQ_HANDLED;
-    }}
+    }
 
     return USBD_REQ_NOTSUPP;
 }
