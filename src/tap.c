@@ -290,7 +290,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
 
-        if (req->wValue == 0) {
+        if (!req->wValue) {
             __dump_header((uint8_t *)hdr);
 
             if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > 9)) {
@@ -301,30 +301,45 @@ static enum usbd_request_return_codes __tap_control_request(
             }
         }
 
-        if (!(req->wValue % 64)) {
-            static const uint16_t __banks[10] = {0, 4, 8, 16, 32, 0, 64, 0, 128, 256};
+        static const uint32_t __size[] = {
+            0,
+            0x40000,   /* 2Mb/256KB */
+            0x80000,   /* 4Mb/512KB */
+            0x100000,  /* 8Mb/1MB */
+            0x200000,  /* 16mb/2MB */
+            0,
+            0x400000,  /* 32Mb/4MB */
+            0,
+            0x800000,  /* 64Mb/8MB */
+            0x1000000, /* 128Mb/16MB */
+        };
 
-            uint16_t bank = (256 - __banks[hdr->rom_sz]) + (req->wValue / 64);
+        const uint32_t abs_addr = req->wValue << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
 
-            if (bank > 0xff) {
-                bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
-                *len = 0;
-                 return USBD_REQ_HANDLED;
-            } else {
-                (void)cart_mbc_poke(REG_ROM_BANK_0, bank);
-            }
+        if (__size[hdr->rom_sz] <= abs_addr) {
+            bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
+            *len = 0;
+            return USBD_REQ_HANDLED;
+        } else if (__size[hdr->rom_sz] < ((abs_addr + *len) - 1)) {
+            *len = __size[hdr->rom_sz] - abs_addr;
         }
 
-        uint32_t addr = ROM0_BASE + ((req->wValue % 64) * USB_CONTROL_BUF_SIZE);
+        uint32_t rel_addr = req->wValue % 64;
+
+        if (!rel_addr)
+            (void)cart_mbc_poke(REG_ROM_BANK_0, ((256 - (__size[hdr->rom_sz] >> 16)) + (abs_addr >> 16)));
+
+        rel_addr <<= 10;
+        rel_addr |= ROM0_BASE;
 
         if (hdr->flags.bwidth) {
             fsmc_bus_width_8();
             for (uint16_t i = 0; i < *len; ++i)
-                (void)cart_nor_peek(addr++, (uint16_t *)(*buf + i));
+                (void)cart_nor_peek(rel_addr++, (uint16_t *)(*buf + i));
             fsmc_bus_width_16();
         } else {
             for (uint16_t i = 0; i < *len; i+=2)
-                (void)cart_nor_peek(addr + i, (uint16_t *)(*buf + i));
+                (void)cart_nor_peek(rel_addr + i, (uint16_t *)(*buf + i));
         }
 
         return USBD_REQ_HANDLED;
