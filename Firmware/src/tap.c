@@ -20,7 +20,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#include <stddef.h>
+#include <string.h>
 
 #include <libopencm3/stm32/fsmc.h>
 
@@ -122,7 +122,7 @@ static enum usbd_request_return_codes __tap_control_request(
     if((req->bmRequestType & 0x7f) != (USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE)) return USBD_REQ_NOTSUPP;
 
     /* Ignore any leveled requests until the error is acknowledged and cleared */
-    //if (__get_state() == TAP_ST8_ERROR && req->bRequest > TAP_CLRERR) return USBD_REQ_HANDLED;
+    if ((__get_state() == TAP_ST8_ERROR) && (req->bRequest >= TAP_HANDSHK)) return USBD_REQ_HANDLED;
 
     switch(req->bRequest) {
     case TAP_GETST8:
@@ -146,7 +146,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_MBCPEEK: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -173,7 +173,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_RAMPEEK: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -222,7 +222,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_MBCPOKE: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -249,7 +249,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_RAMPOKE: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -273,7 +273,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_DUMPHDR:
-        if (NULL == len || 16 > *len) {
+        if ((NULL == len) || (16 > *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -283,7 +283,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         return USBD_REQ_HANDLED;
     case TAP_DUMPROM: {
-        if (NULL == len || USB_CONTROL_BUF_SIZE != *len) {
+        if ((NULL == len) || (USB_CONTROL_BUF_SIZE != *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -293,7 +293,8 @@ static enum usbd_request_return_codes __tap_control_request(
         if (req->wValue == 0) {
             __dump_header((uint8_t *)hdr);
 
-            if (hdr->jmpf.opcode != 0xea) {
+            if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > 9)) {
+                bzero(__ctx.dat.buf, 16);
                 __set_error_state(TAP_ERR_PEEK);
                 *len = 0;
                 return USBD_REQ_HANDLED;
@@ -306,6 +307,7 @@ static enum usbd_request_return_codes __tap_control_request(
             uint16_t bank = (256 - __banks[hdr->rom_sz]) + (req->wValue / 64);
 
             if (bank > 0xff) {
+                bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
                 *len = 0;
                  return USBD_REQ_HANDLED;
             } else {
