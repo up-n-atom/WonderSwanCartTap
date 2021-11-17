@@ -113,6 +113,28 @@ struct cart_header {
     uint16_t csum;
 } __attribute__((packed));
 
+static const uint32_t rom_sz[] = {
+    0,
+    0x40000,   /* 2Mb/256KB */
+    0x80000,   /* 4Mb/512KB */
+    0x100000,  /* 8Mb/1MB */
+    0x200000,  /* 16mb/2MB */
+    0,
+    0x400000,  /* 32Mb/4MB */
+    0,
+    0x800000,  /* 64Mb/8MB */
+    0x1000000, /* 128Mb/16MB */
+};
+
+static const uint32_t sav_sz[] = {
+    0,
+    0x2000,  /* 64Kb/8KB */
+    0x8000,  /* 256Kb/32KB */
+    0x20000, /* 1Mb/128KB */
+    0x40000, /* 2Mb/256KB */
+    0x80000, /* 4Mb/512KB */
+};
+
 void cart_clock_start(void);
 
 void cart_clock_stop(void);
