@@ -79,7 +79,7 @@ static inline void __set_error_state(enum tap_error err)
 }
 
 __attribute__((always_inline))
-static inline void __dump_header(uint8_t *buf)
+static inline int __dump_header(uint8_t *buf)
 {
     uint8_t rb0 = 0;
 
@@ -110,6 +110,8 @@ static inline void __dump_header(uint8_t *buf)
 #ifdef STRICT
     fsmc_bus_width_16();
 #endif
+
+    return sizeof(struct cart_header);
 }
 
 __attribute__((always_inline))
@@ -368,8 +370,7 @@ static enum usbd_request_return_codes __tap_control_request(
             return USBD_REQ_HANDLED;
         }
 
-        __dump_header(*buf);
-        *len = sizeof(struct cart_header);
+        *len = __dump_header(*buf);
 
         return USBD_REQ_HANDLED;
     case TAP_DUMPROM: {
