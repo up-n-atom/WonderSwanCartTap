@@ -76,14 +76,21 @@ static inline void __set_error_state(enum tap_error err)
 
     if (err)
         __set_state(TAP_ST8_ERROR);
+    else
+        if (__get_state() == TAP_ST8_ERROR)
+            __set_state(TAP_ST8_IDLE);
 }
 
 __attribute__((always_inline))
-static inline int __dump_header(uint8_t *buf)
+static inline int __dump_header(uint8_t *buf, uint16_t len)
 {
+    struct cart_header *hdr = (struct cart_header *)buf;
     uint8_t rb0 = 0;
 
-    struct cart_header *hdr = (struct cart_header *)buf;
+    if (sizeof(struct cart_header) > len) {
+        __set_error_state(TAP_ERR_DATA);
+        return 0;
+    }
 
 #ifdef STRICT
     fsmc_bus_width_8();
@@ -115,14 +122,17 @@ static inline int __dump_header(uint8_t *buf)
 }
 
 __attribute__((always_inline))
-static inline int __dump_rom(const uint32_t idx, uint8_t *buf)
+static inline int __dump_rom(const uint32_t idx, uint8_t *buf, uint16_t len)
 {
-    uint16_t len = USB_CONTROL_BUF_SIZE;
-
     struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
 
+    if (USB_CONTROL_BUF_SIZE != len) {
+        __set_error_state(TAP_ERR_DATA);
+        return 0;
+    }
+
     if (!idx) {
-         (void)__dump_header((uint8_t *)hdr);
+         (void)__dump_header((uint8_t *)hdr, sizeof(struct cart_header));
 
         if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > (sizeof(cart_rom_sz) / sizeof(cart_rom_sz[0])))) {
             bzero(__ctx.dat.buf, sizeof(struct cart_header));
@@ -162,14 +172,17 @@ static inline int __dump_rom(const uint32_t idx, uint8_t *buf)
 }
 
 __attribute__((always_inline))
-static inline int __dump_ram(const uint32_t idx, uint8_t *buf)
+static inline int __dump_ram(const uint32_t idx, uint8_t *buf, uint16_t len)
 {
-    uint16_t len = USB_CONTROL_BUF_SIZE;
-
     struct cart_header *hdr = (struct cart_header *)&__ctx.dat.buf;
 
+    if (USB_CONTROL_BUF_SIZE != len) {
+        __set_error_state(TAP_ERR_DATA);
+        return 0;
+    }
+
     if (!idx) {
-        (void)__dump_header((uint8_t *)hdr);
+        (void)__dump_header((uint8_t *)hdr, sizeof(struct cart_header));
 
         if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > (sizeof(cart_sav_sz) / sizeof(cart_sav_sz[0])))) {
             bzero(__ctx.dat.buf, sizeof(struct cart_header));
@@ -365,34 +378,16 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_DUMPHDR:
-        if ((NULL == len) || (sizeof(struct cart_header) > *len)) {
-            __set_error_state(TAP_ERR_DATA);
-            *len = 0;
-            return USBD_REQ_HANDLED;
-        }
-
-        *len = __dump_header(*buf);
+        *len = __dump_header(*buf, *len);
 
         return USBD_REQ_HANDLED;
     case TAP_DUMPROM: {
-        if ((NULL == len) || (USB_CONTROL_BUF_SIZE != *len)) {
-            __set_error_state(TAP_ERR_DATA);
-            *len = 0;
-            return USBD_REQ_HANDLED;
-        }
-
-        *len = __dump_rom(req->wValue, *buf);
+        *len = __dump_rom(req->wValue, *buf, *len);
 
         return USBD_REQ_HANDLED;
     }
     case TAP_DUMPRAM: {
-        if (NULL == len || USB_CONTROL_BUF_SIZE != *len) {
-            __set_error_state(TAP_ERR_DATA);
-            *len = 0;
-            return USBD_REQ_HANDLED;
-        }
-
-        *len = __dump_ram(req->wValue, *buf);
+        *len = __dump_ram(req->wValue, *buf, *len);
 
         return USBD_REQ_HANDLED;
     }}
