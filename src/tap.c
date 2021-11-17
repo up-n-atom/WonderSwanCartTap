@@ -367,6 +367,7 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_DUMPHDR:
         if ((NULL == len) || (sizeof(struct cart_header) > *len)) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -376,6 +377,7 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_DUMPROM: {
         if ((NULL == len) || (USB_CONTROL_BUF_SIZE != *len)) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -386,6 +388,7 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_DUMPRAM: {
         if (NULL == len || USB_CONTROL_BUF_SIZE != *len) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
