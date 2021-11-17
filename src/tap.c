@@ -296,7 +296,7 @@ static enum usbd_request_return_codes __tap_control_request(
         if (!req->wValue) {
             __dump_header((uint8_t *)hdr);
 
-            if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > 9)) {
+            if ((hdr->jmpf.opcode != 0xea) || (hdr->rom_sz > (sizeof(rom_sz) / sizeof(rom_sz[0])))) {
                 bzero(__ctx.dat.buf, 16);
                 __set_error_state(TAP_ERR_PEEK);
                 *len = 0;
@@ -304,33 +304,20 @@ static enum usbd_request_return_codes __tap_control_request(
             }
         }
 
-        static const uint32_t __size[] = {
-            0,
-            0x40000,   /* 2Mb/256KB */
-            0x80000,   /* 4Mb/512KB */
-            0x100000,  /* 8Mb/1MB */
-            0x200000,  /* 16mb/2MB */
-            0,
-            0x400000,  /* 32Mb/4MB */
-            0,
-            0x800000,  /* 64Mb/8MB */
-            0x1000000, /* 128Mb/16MB */
-        };
-
         const uint32_t abs_addr = req->wValue << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
 
-        if (__size[hdr->rom_sz] <= abs_addr) {
+        if (rom_sz[hdr->rom_sz] <= abs_addr) {
             bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
             *len = 0;
             return USBD_REQ_HANDLED;
-        } else if (__size[hdr->rom_sz] < ((abs_addr + *len) - 1)) {
-            *len = __size[hdr->rom_sz] - abs_addr;
+        } else if (rom_sz[hdr->rom_sz] < ((abs_addr + *len) - 1)) {
+            *len = rom_sz[hdr->rom_sz] - abs_addr;
         }
 
         uint32_t rel_addr = req->wValue % 64;
 
         if (!rel_addr)
-            (void)cart_mbc_poke(REG_ROM_BANK_0, ((256 - (__size[hdr->rom_sz] >> 16)) + (abs_addr >> 16)));
+            (void)cart_mbc_poke(REG_ROM_BANK_0, ((256 - (rom_sz[hdr->rom_sz] >> 16)) + (abs_addr >> 16)));
 
         rel_addr <<= 10;
         rel_addr |= ROM0_BASE;
@@ -358,7 +345,7 @@ static enum usbd_request_return_codes __tap_control_request(
         if (req->wValue == 0) {
             __dump_header((uint8_t *)hdr);
 
-            if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > 5)) {
+            if ((hdr->jmpf.opcode != 0xea) || (hdr->sav_sz > (sizeof(sav_sz) / sizeof(sav_sz[0])))) {
                 bzero(__ctx.dat.buf, 16);
                 __set_error_state(TAP_ERR_PEEK);
                 *len = 0;
@@ -366,29 +353,20 @@ static enum usbd_request_return_codes __tap_control_request(
             }
         }
 
-        static const uint32_t __size[6] = {
-            0,
-            0x2000,  /* 64Kb/8KB */
-            0x8000,  /* 256Kb/32KB */
-            0x20000, /* 1Mb/128KB */
-            0x40000, /* 2Mb/256KB */
-            0x80000, /* 4Mb/512KB */
-        };
-
         const uint32_t abs_addr = req->wValue << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
 
-        if (__size[hdr->sav_sz] <= abs_addr) {
+        if (sav_sz[hdr->sav_sz] <= abs_addr) {
             bzero(__ctx.dat.buf, sizeof(__ctx.dat.buf));
             *len = 0;
             return USBD_REQ_HANDLED;
-        } else if (__size[hdr->sav_sz] < ((abs_addr + *len) - 1)) {
-            *len = __size[hdr->sav_sz] - abs_addr;
+        } else if (sav_sz[hdr->sav_sz] < ((abs_addr + *len) - 1)) {
+            *len = sav_sz[hdr->sav_sz] - abs_addr;
         }
 
         uint32_t rel_addr = req->wValue % 64;
 
         if (!rel_addr)
-            (void)cart_mbc_poke(REG_RAM_BANK, ((256 - (__size[hdr->sav_sz] >> 16)) + (abs_addr >> 16)));
+            (void)cart_mbc_poke(REG_RAM_BANK, ((256 - (sav_sz[hdr->sav_sz] >> 16)) + (abs_addr >> 16)));
 
         rel_addr <<= 10;
         rel_addr |= SRAM_BASE;
