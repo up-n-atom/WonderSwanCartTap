@@ -146,7 +146,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_MBCPEEK: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -173,7 +173,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_RAMPEEK: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -222,7 +222,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_MBCPOKE: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -249,7 +249,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_RAMPOKE: {
-        if (NULL == len || 0 == *len) {
+        if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -273,7 +273,7 @@ static enum usbd_request_return_codes __tap_control_request(
         return USBD_REQ_HANDLED;
     }
     case TAP_DUMPHDR:
-        if (NULL == len || 16 > *len) {
+        if ((NULL == len) || (16 > *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
@@ -283,7 +283,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         return USBD_REQ_HANDLED;
     case TAP_DUMPROM: {
-        if (NULL == len || USB_CONTROL_BUF_SIZE != *len) {
+        if ((NULL == len) || (USB_CONTROL_BUF_SIZE != *len)) {
             __set_error_state(TAP_ERR_DATA);
             return USBD_REQ_HANDLED;
         }
