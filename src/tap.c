@@ -150,12 +150,11 @@ static inline int __dump_rom(const uint32_t idx, uint8_t *buf, uint16_t len)
         len = cart_rom_sz[hdr->rom_sz] - abs_addr;
     }
 
-    uint32_t rel_addr = idx % 64;
+    uint32_t rel_addr = (uint16_t)abs_addr;
 
     if (!rel_addr)
         (void)cart_mbc_poke(REG_ROM_BANK_0, ((256 - (cart_rom_sz[hdr->rom_sz] >> 16)) + (abs_addr >> 16)));
 
-    rel_addr <<= 10;
     rel_addr |= ROM0_BASE;
 
     if (hdr->flags.bwidth) {
@@ -191,7 +190,7 @@ static inline int __dump_ram(const uint32_t idx, uint8_t *buf, uint16_t len)
         }
     }
 
-    const uint32_t abs_addr = idx << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
+    const uint32_t abs_addr = idx << 10;
 
     if (cart_sav_sz[hdr->sav_sz] <= abs_addr) {
         bzero(__ctx.dat.buf, sizeof(struct cart_header));
@@ -200,12 +199,11 @@ static inline int __dump_ram(const uint32_t idx, uint8_t *buf, uint16_t len)
         len = cart_sav_sz[hdr->sav_sz] - abs_addr;
     }
 
-    uint32_t rel_addr = idx % 64;
+    uint32_t rel_addr = (uint16_t)abs_addr;
 
     if (!rel_addr)
         (void)cart_mbc_poke(REG_RAM_BANK, ((256 - (cart_sav_sz[hdr->sav_sz] >> 16)) + (abs_addr >> 16)));
 
-    rel_addr <<= 10;
     rel_addr |= SRAM_BASE;
 
     for (uint16_t i = 0; i < len; ++i)
