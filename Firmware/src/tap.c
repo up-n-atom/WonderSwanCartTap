@@ -380,15 +380,12 @@ static enum usbd_request_return_codes __tap_control_request(
     }
     case TAP_DUMPHDR:
         *len = __dump_header(*buf, *len);
-
         return USBD_REQ_HANDLED;
     case TAP_DUMPROM:
         *len = __dump_rom(req->wValue, *buf, *len);
-
         return USBD_REQ_HANDLED;
     case TAP_DUMPRAM:
         *len = __dump_ram(req->wValue, *buf, *len);
-
         return USBD_REQ_HANDLED;
     }
 
