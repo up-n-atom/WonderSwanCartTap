@@ -97,11 +97,13 @@ static inline void __gpio_setup(void)
                   GPIO13);
 }
 
+__attribute__((always_inline))
 inline void led_on(void)
 {
     gpio_clear(GPIOC, GPIO13); /* LED active low!*/
 }
 
+__attribute__((always_inline))
 inline void led_off(void)
 {
     gpio_set(GPIOC, GPIO13); /* LED active low!*/

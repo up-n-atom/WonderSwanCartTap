@@ -35,8 +35,8 @@ void msleep(unsigned int ms);
 
 void plat_setup(void);
 
-void led_on(void) __attribute__((always_inline));
+void led_on(void);
 
-void led_off(void) __attribute__((always_inline));
+void led_off(void);
 
 #endif
