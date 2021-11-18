@@ -150,12 +150,11 @@ static inline int __dump_rom(const uint32_t idx, uint8_t *buf, uint16_t len)
         len = cart_rom_sz[hdr->rom_sz] - abs_addr;
     }
 
-    uint32_t rel_addr = idx % 64;
+    uint32_t rel_addr = (uint16_t)abs_addr;
 
     if (!rel_addr)
         (void)cart_mbc_poke(REG_ROM_BANK_0, ((256 - (cart_rom_sz[hdr->rom_sz] >> 16)) + (abs_addr >> 16)));
 
-    rel_addr <<= 10;
     rel_addr |= ROM0_BASE;
 
     if (hdr->flags.bwidth) {
@@ -191,7 +190,7 @@ static inline int __dump_ram(const uint32_t idx, uint8_t *buf, uint16_t len)
         }
     }
 
-    const uint32_t abs_addr = idx << 10; /* req->wValue * USB_CONTROL_BUF_SIZE */
+    const uint32_t abs_addr = idx << 10;
 
     if (cart_sav_sz[hdr->sav_sz] <= abs_addr) {
         bzero(__ctx.dat.buf, sizeof(struct cart_header));
@@ -200,12 +199,11 @@ static inline int __dump_ram(const uint32_t idx, uint8_t *buf, uint16_t len)
         len = cart_sav_sz[hdr->sav_sz] - abs_addr;
     }
 
-    uint32_t rel_addr = idx % 64;
+    uint32_t rel_addr = (uint16_t)abs_addr;
 
     if (!rel_addr)
         (void)cart_mbc_poke(REG_RAM_BANK, ((256 - (cart_sav_sz[hdr->sav_sz] >> 16)) + (abs_addr >> 16)));
 
-    rel_addr <<= 10;
     rel_addr |= SRAM_BASE;
 
     for (uint16_t i = 0; i < len; ++i)
@@ -260,6 +258,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         if (REG_MIN > port) {
             __set_error_state(TAP_ERR_ADDR);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -306,6 +305,7 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_R1MPEEK: {
         if (NULL == len || 2 > *len) {
             __set_error_state(TAP_ERR_DATA);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -313,6 +313,7 @@ static enum usbd_request_return_codes __tap_control_request(
 
         if (addr % 2) {
             __set_error_state(TAP_ERR_ADDR);
+            *len = 0;
             return USBD_REQ_HANDLED;
         }
 
@@ -381,16 +382,15 @@ static enum usbd_request_return_codes __tap_control_request(
         *len = __dump_header(*buf, *len);
 
         return USBD_REQ_HANDLED;
-    case TAP_DUMPROM: {
+    case TAP_DUMPROM:
         *len = __dump_rom(req->wValue, *buf, *len);
 
         return USBD_REQ_HANDLED;
-    }
-    case TAP_DUMPRAM: {
+    case TAP_DUMPRAM:
         *len = __dump_ram(req->wValue, *buf, *len);
 
         return USBD_REQ_HANDLED;
-    }}
+    }
 
     return USBD_REQ_NOTSUPP;
 }
