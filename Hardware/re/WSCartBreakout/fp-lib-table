@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name WonderSwan)(type KiCad)(uri ${KIPRJMOD}/Library/WonderSwan.pretty)(options "")(descr ""))
+)

@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name WonderSwan)(type Legacy)(uri ${KIPRJMOD}/Library/WonderSwan.lib)(options "")(descr ""))
+  (lib (name WSCartBreakout-rescue)(type Legacy)(uri ${KIPRJMOD}/WSCartBreakout-rescue.lib)(options "")(descr ""))
+)
