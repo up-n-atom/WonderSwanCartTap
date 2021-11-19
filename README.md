@@ -12,3 +12,11 @@ KiCAD project files are available in the [Hardware](/Hardware) directory.
 * [WonderSwan Cartridge Adapter](/Hardware/vccgnd_f103zet6/WSCarTAdapter)
 
 ![Adapter Boards](https://user-images.githubusercontent.com/234549/140374414-5fc2d95d-b451-44c6-8a49-53895978b57d.jpg)
+
+## RE & Debug Hardware
+
+Additional hardware to assist in reverse engineering and debugging.
+
+* [WonderSwan Cartridge Breakout](/Hardware/re/WSCartBreakout)
+
+![RE Hardware](https://user-images.githubusercontent.com/234549/142554946-c4e8df89-a020-4218-99be-861dcc7fabfb.jpg)
