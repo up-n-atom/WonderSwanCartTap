@@ -47,7 +47,11 @@ void sys_tick_handler(void)
 __attribute__((always_inline))
 static inline void __plat_sleep_begin(unsigned int msecs)
 {
+#ifdef USE_PLL_HSI
     systick_set_reload((msecs * 6000) - 1);
+#else
+    systick_set_reload((msecs * 9000) - 1);
+#endif
     (void)systick_get_countflag();
     systick_interrupt_enable();
     systick_counter_enable();
@@ -97,11 +101,13 @@ static inline void __gpio_setup(void)
                   GPIO13);
 }
 
+__attribute__((always_inline))
 inline void led_on(void)
 {
     gpio_clear(GPIOC, GPIO13); /* LED active low!*/
 }
 
+__attribute__((always_inline))
 inline void led_off(void)
 {
     gpio_set(GPIOC, GPIO13); /* LED active low!*/
@@ -109,12 +115,22 @@ inline void led_off(void)
 
 void plat_setup(void)
 {
-    rcc_clock_setup_in_hsi_out_48mhz();
+#ifdef USE_PLL_HSI
     /* 48Hz / 8 = 6000000 counts per second */
+    rcc_clock_setup_in_hsi_out_48mhz();
+#else
+    /* 72Hz / 8 = 9000000 counts per second */
+    rcc_clock_setup_in_hse_8mhz_out_72mhz();
+#endif
     systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8);
 #ifdef SLEEPLESS
+#ifdef USE_PLL_HSI
     /* 6000000/6000 = 1000 overflows per second ie. interrupt every 1ms */
     systick_set_reload(5999);
+#else
+    /* 9000000/9000 = 1000 overflows per second ie. interrupt every 1ms */
+    systick_set_reload(8999);
+#endif
 
     systick_interrupt_enable();
     systick_counter_enable();

@@ -60,13 +60,22 @@ static inline void __tim2_setup(void)
     rcc_periph_reset_pulse(RST_TIM2);
 
     timer_set_master_mode(TIM2, TIM_CR2_MMS_UPDATE);
-    /* PSC + ARR calculated using https://github.com/v0idv0id/STM32-Scaler
-       ./timescale.py -c 48000000 -f 384000 -d 50 -e 0.5
-    */
+
+    /* PSC + ARR calculated using https://github.com/v0idv0id/STM32-Scaler */
+#ifdef USE_PLL_HSI
+    /* ./timescale.py -c 48000000 -f 384000 -d 50 -e 0.5 */
     timer_set_prescaler(TIM2, 4);
     timer_set_period(TIM2, 24);
     /* 50% duty cycle */
     timer_set_oc_value(TIM2, TIM_OC2, 12);
+#else
+    /* ./timescale.py -c 72000000 -f 384000 -d 50 -e 0.5 
+       Error: 0.2666666666666595% */
+    timer_set_prescaler(TIM2, 3);
+    timer_set_period(TIM2, 46);
+    /* 50% duty cycle */
+    timer_set_oc_value(TIM2, TIM_OC2, 23);
+#endif
     /* PWM mode 1 - output high if CNT > CCR1 */
     timer_set_oc_mode(TIM2, TIM_OC2, TIM_OCM_PWM1);
     timer_set_oc_idle_state_unset(TIM2, TIM_OC2);

@@ -26,6 +26,7 @@
 #include <libopencm3/cm3/nvic.h>
 
 #include <libopencm3/stm32/dma.h>
+#include <libopencm3/stm32/exti.h>
 #include <libopencm3/stm32/fsmc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
@@ -478,4 +479,42 @@ int cart_handshake(void)
     fsmc_setup();
 
     return HANDSHAKE_SUCCESS;
+}
+
+void cart_detect_enable(void)
+{
+    rcc_periph_clock_enable(RCC_GPIOB);
+    rcc_periph_clock_enable(RCC_AFIO);
+
+    gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,
+                  GPIO4);
+    gpio_clear(GPIOB, GPIO4);
+
+    nvic_enable_irq(NVIC_EXTI4_IRQ);
+
+    exti_select_source(EXTI4, GPIOB);
+    exti_set_trigger(EXTI4, EXTI_TRIGGER_BOTH);
+    exti_enable_request(EXTI4);
+
+    if ((gpio_get(GPIOB, GPIO4) & GPIO4))
+        led_on();
+    else
+        led_off();
+}
+
+void cart_detect_disable(void)
+{
+    exti_disable_request(EXTI4);
+
+    nvic_disable_irq(NVIC_EXTI4_IRQ);
+}
+
+void exti4_isr(void)
+{
+    if ((gpio_get(GPIOB, GPIO4) & GPIO4))
+        led_on();
+    else
+        led_off();
+
+    exti_reset_request(EXTI4);
 }

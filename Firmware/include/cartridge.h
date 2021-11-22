@@ -159,6 +159,10 @@ void cart_2k3_nor_poke_disable(void);
 
 int cart_handshake(void);
 
+void cart_detect_enable(void);
+
+void cart_detect_disable(void);
+
 #if 0
 int cart_2k1_eeprom_erase(const uint32_t addr, const uint8_t val);
 
