@@ -90,6 +90,8 @@ static inline int __dump_header(uint8_t *buf, uint16_t len)
     if (sizeof(struct cart_header) > len) {
         __set_error_state(TAP_ERR_DATA);
         return 0;
+    } else {
+        len = sizeof(struct cart_header);
     }
 
 #ifdef STRICT
@@ -101,12 +103,12 @@ static inline int __dump_header(uint8_t *buf, uint16_t len)
     fsmc_bus_width_16();
 #endif
 
-    for (uint8_t i = 0; i < sizeof(struct cart_header); i+=2)
+    for (uint8_t i = 0; i < len; i+=2)
         (void)cart_nor_peek(0x2fff0 | i, (uint16_t *)(buf + i));
 
     if (hdr->flags.bwidth) {
         fsmc_bus_width_8();
-        for (uint8_t i = 1; i < sizeof(struct cart_header); i+=2)
+        for (uint8_t i = 1; i < len; i+=2)
             (void)cart_nor_peek(0x2fff0 | i, (uint16_t *)(buf + i));
     }
 
@@ -118,7 +120,7 @@ static inline int __dump_header(uint8_t *buf, uint16_t len)
     fsmc_bus_width_16();
 #endif
 
-    return sizeof(struct cart_header);
+    return len;
 }
 
 __attribute__((always_inline))
