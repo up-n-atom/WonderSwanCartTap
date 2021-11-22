@@ -43,7 +43,7 @@ void sys_tick_handler(void)
     sys_millis++;
 }
 
-#ifndef SLEEPLESS
+#ifdef STANDBY_SLEEP
 __attribute__((always_inline))
 static inline void __plat_sleep_begin(unsigned int msecs)
 {
@@ -80,14 +80,14 @@ void msleep(unsigned int msecs)
 {
     if (!msecs) return;
 
-#ifdef SLEEPLESS
-    uint64_t cont = sys_millis + msecs;
-
-    while (cont > sys_millis) __asm__("nop");
-#else
+#ifdef STANDBY_SLEEP
     __plat_sleep_begin(msecs);
     __plat_sleep();
     __plat_sleep_end();
+#else
+    uint64_t cont = sys_millis + msecs;
+
+    while (cont > sys_millis) __asm__("nop");
 #endif
 }
 
@@ -123,7 +123,7 @@ void plat_setup(void)
     rcc_clock_setup_in_hse_8mhz_out_72mhz();
 #endif
     systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8);
-#ifdef SLEEPLESS
+#ifndef STANDBY_SLEEP
 #ifdef USE_PLL_HSI
     /* 6000000/6000 = 1000 overflows per second ie. interrupt every 1ms */
     systick_set_reload(5999);
@@ -137,7 +137,7 @@ void plat_setup(void)
 #endif
 
 #ifdef DEBUG
-#ifdef SLEEPLESS
+#ifdef STANDBY_SLEEP
     /* Enable debugging during wfi */
     DBGMCU_CR = DBGMCU_CR_STANDBY | DBGMCU_CR_STOP | DBGMCU_CR_SLEEP;
 #endif
