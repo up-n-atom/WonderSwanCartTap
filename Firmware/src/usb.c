@@ -235,6 +235,10 @@ static uint8_t __control_buffer[USB_CONTROL_BUF_SIZE] __attribute__ ((aligned (2
 
 usbd_device* usb_setup(void)
 {
+#ifdef USE_PLL_HSI
+#pragma GCC warning "Reliability of USB peripheral is not guaranteed... switch to HSE source."
+#endif
+
     usbd_device *dev;
 
     rcc_periph_clock_enable(RCC_USB);
