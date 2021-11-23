@@ -23,7 +23,7 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#ifndef SLEEPLESS
+#ifdef STANDBY_SLEEP
 __attribute__((always_inline))
 static inline void __wfi(void)
 {
