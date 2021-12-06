@@ -34,7 +34,7 @@ static struct winusb_compatible_id_descriptor __winusb_cid_desc = {
         .reserved = { 0 },
     },
     .functions = {{
-        .bInterfaceNumber = 2,
+        .bInterfaceNumber = 2, /* TAP interface - Index in __ifaces usb.c */
         .reserved0 = { 1 },
         .compatibleId = "WINUSB",
         .subCompatibleId = "",
