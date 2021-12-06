@@ -35,6 +35,7 @@
 
 extern void tap_set_config(usbd_device *dev, uint16_t wValue);
 extern void cdcacm_set_config(usbd_device *dev, uint16_t wValue);
+extern void winusb_set_config(usbd_device *dev, uint16_t wValue);
 
 static const struct usb_device_descriptor __dev_desc = {
     .bLength = USB_DT_DEVICE_SIZE,
@@ -255,6 +256,16 @@ usbd_device* usb_setup(void)
 
     usbd_register_set_config_callback(dev, tap_set_config);
     usbd_register_set_config_callback(dev, cdcacm_set_config);
+
+#ifndef PLATFORMIO
+    /* PlatformIO libopencm3 is out of date; Function was added in c13c2b3b
+       https://github.com/libopencm3/libopencm3/commit/c13c2b3b3c41b71586209bd8a9615b0c34cb296c */
+    usbd_register_extra_string(dev, 0xee, "MSFT100!");
+#endif
+    usbd_register_set_config_callback(dev, winusb_set_config);
+
+    /* Pre-register the callback */
+    winusb_set_config(dev, 0);
 
     return dev;
 }
