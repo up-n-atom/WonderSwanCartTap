@@ -45,10 +45,8 @@ static enum usbd_request_return_codes cdcacm_control_request(
     return USBD_REQ_NOTSUPP;
 }
 
-void cdcacm_set_config(usbd_device *dev, uint16_t wValue)
+void cdcacm_set_config(usbd_device *dev, __attribute__((unused)) uint16_t wValue)
 {
-    (void)wValue;
-
     usbd_ep_setup(dev, 0x01, USB_ENDPOINT_ATTR_BULK, 64, uart_usb_out);
     usbd_ep_setup(dev, 0x82, USB_ENDPOINT_ATTR_BULK, 64, uart_usb_in);
     usbd_ep_setup(dev, 0x83, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);

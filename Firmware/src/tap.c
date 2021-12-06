@@ -218,10 +218,11 @@ static enum usbd_request_return_codes __tap_control_request(
     __attribute__((unused)) usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
     __attribute__((unused)) usbd_control_complete_callback *complete)
 {
-    if (req->wIndex != 2) return USBD_REQ_NEXT_CALLBACK;
+    if (2 != req->wIndex) return USBD_REQ_NEXT_CALLBACK;
 
     /* Only accept vendor request */
-    if((req->bmRequestType & 0x7f) != (USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE)) return USBD_REQ_NOTSUPP;
+    if((req->bmRequestType & (USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT)) != (USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE))
+        return USBD_REQ_NOTSUPP;
 
     /* Ignore any leveled requests until the error is acknowledged and cleared */
     if ((__get_state() == TAP_ST8_ERROR) && (req->bRequest >= TAP_HANDSHK)) {
@@ -245,11 +246,10 @@ static enum usbd_request_return_codes __tap_control_request(
     case TAP_CLRERR:
         __set_error_state(TAP_ERR_NONE);
         return USBD_REQ_HANDLED;
-    case TAP_HANDSHK: {
+    case TAP_HANDSHK:
         if (cart_handshake())
             __set_error_state(TAP_ERR_CART);
         return USBD_REQ_HANDLED;
-    }
     case TAP_MBCPEEK: {
         if ((NULL == len) || (0 == *len)) {
             __set_error_state(TAP_ERR_DATA);
@@ -394,11 +394,11 @@ static enum usbd_request_return_codes __tap_control_request(
     return USBD_REQ_NOTSUPP;
 }
 
-void tap_set_config(usbd_device *dev, uint16_t wValue)
+void tap_set_config(usbd_device *dev, __attribute__((unused)) uint16_t wValue)
 {
-    (void)wValue;
-
     tim2_3_setup();
+
+    cart_detect_enable();
 
     usbd_register_control_callback(dev, USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE,
                                    USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
