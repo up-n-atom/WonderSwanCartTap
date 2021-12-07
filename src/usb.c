@@ -25,14 +25,10 @@
 #include <libopencm3/stm32/desig.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/st_usbfs.h>
 
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/usb/dfu.h>
-#include <libopencm3/cm3/scb.h>
 #include <libopencm3/usb/usbd.h>
-
-#include <libopencmsis/core_cm3.h>
 
 #include "platform.h"
 #include "usb.h"
