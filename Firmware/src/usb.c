@@ -275,6 +275,8 @@ void usb_wakeup_isr(void)
 
     /* Re-enable clocks */
 #ifdef PLATFORMIO
+    /* PlatformIO libopencm3 is out of date; Functions depecrated in 4eee1e9b
+       https://github.com/libopencm3/libopencm3/commit/4eee1e9bdecf56bc2976c234dde6f5e177e0c69c */
 #ifdef USE_PLL_HSI
     rcc_clock_setup_in_hsi_out_48mhz();
 #else
