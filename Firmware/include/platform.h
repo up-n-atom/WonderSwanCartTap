@@ -31,4 +31,8 @@ void led_on(void);
 
 void led_off(void);
 
+#ifdef STOP_MODE
+void plat_stop_mode(void);
+#endif
+
 #endif

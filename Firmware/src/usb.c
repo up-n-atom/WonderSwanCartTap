@@ -23,12 +23,18 @@
 #include <stddef.h>
 
 #include <libopencm3/stm32/desig.h>
+#include <libopencm3/stm32/exti.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/st_usbfs.h>
 
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/usb/dfu.h>
 #include <libopencm3/usb/usbd.h>
+
+#include <libopencm3/cm3/cortex.h>
+#include <libopencm3/cm3/nvic.h>
+#include <libopencm3/cm3/scb.h>
 
 #include "platform.h"
 #include "usb.h"
@@ -48,7 +54,7 @@ static const struct usb_device_descriptor __dev_desc = {
 #if 1
     /* Todo: Register own id @ https://pid.codes/ */
     .idVendor = 0x0483,
-    .idProduct = 0xDF11,
+    .idProduct = 0xDF12,
     .bcdDevice = 0x0200,
 #endif
     .iManufacturer = 1,
@@ -234,6 +240,61 @@ static const char *__strings[] = {
 
 static uint8_t __control_buffer[USB_CONTROL_BUF_SIZE] __attribute__ ((aligned (2)));
 
+static void usb_suspend(void)
+{
+    /* Todo: All peripherals should be disabled and the cartridge should be powered down to meet
+       the 2.5mA requirement. */
+
+    /* libopencm3 clears the suspend interrupt prior to calling this function, while it should be
+       cleared after the following... */
+    *USB_CNTR_REG |= USB_CNTR_FSUSP;
+    *USB_CNTR_REG |= USB_CNTR_LP_MODE;
+
+#ifdef STOP_MODE
+    plat_stop_mode();
+#endif
+}
+
+#ifndef STOP_MODE
+static void usb_resume(void)
+{
+    if (*USB_FNR_REG & USB_FNR_RXDP) {
+        /* Remain suspended if there is noise on the bus
+           Ref. RM0008 - Table 172 */
+        *USB_CNTR_REG |= USB_CNTR_FSUSP; 
+        *USB_CNTR_REG |= USB_CNTR_LP_MODE;
+    } else {
+        *USB_CNTR_REG &= ~USB_CNTR_LP_MODE;
+        *USB_CNTR_REG &= ~USB_CNTR_FSUSP;
+    }
+}
+#else
+void usb_wakeup_isr(void)
+{
+    exti_reset_request(EXTI18);
+
+    /* Re-enable clocks */
+#ifdef PLATFORMIO
+#ifdef USE_PLL_HSI
+    rcc_clock_setup_in_hsi_out_48mhz();
+#else
+    rcc_clock_setup_in_hse_8mhz_out_72mhz();
+#endif
+#else
+#ifdef USE_PLL_HSI
+    rcc_clock_setup_pll(&rcc_hsi_configs[RCC_CLOCK_HSI_48MHZ]);
+#else
+    rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
+#endif
+#endif
+
+    SCB_SCR &= ~SCB_SCR_SLEEPDEEP;
+
+    *USB_CNTR_REG &= ~USB_CNTR_LP_MODE;
+    *USB_CNTR_REG &= ~USB_CNTR_FSUSP;
+}
+#endif
+
 usbd_device* usb_setup(void)
 {
 #ifdef USE_PLL_HSI
@@ -260,8 +321,19 @@ usbd_device* usb_setup(void)
 #endif
     usbd_register_set_config_callback(dev, winusb_set_config);
 
+    usbd_register_suspend_callback(dev, usb_suspend);
+#ifndef STOP_MODE
+    usbd_register_resume_callback(dev, usb_resume);
+#endif
+
     /* Pre-register the callback */
     winusb_set_config(dev, 0);
+
+#ifdef STOP_MODE
+    exti_set_trigger(EXTI18, EXTI_TRIGGER_RISING);
+    exti_enable_request(EXTI18);
+    nvic_enable_irq(NVIC_USB_WAKEUP_IRQ);
+#endif
 
     return dev;
 }
