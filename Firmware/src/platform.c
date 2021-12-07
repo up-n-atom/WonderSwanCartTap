@@ -180,9 +180,10 @@ void plat_stop_mode(void)
 
     pwr_clear_wakeup_flag();
 
+    /* Ref. RM0008 - Table 14. */
     SCB_SCR |= SCB_SCR_SLEEPDEEP;
-    pwr_voltage_regulator_low_power_in_stop();
     pwr_set_stop_mode();
+    pwr_voltage_regulator_low_power_in_stop();
 
     __WFI();
 }
