@@ -20,24 +20,11 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#include <libopencm3/usb/usbd.h>
-
-#include "platform.h"
-#include "uart.h"
 #include "usb.h"
 
 int main(void)
 {
-    usbd_device *usb_dev;
-
-    plat_setup();
-
-    uart_setup();
-
-    usb_dev = usb_setup();
-
-    while (1)
-        usbd_poll(usb_dev);
+    usb_run();
 
     return 0;
 }

@@ -36,7 +36,9 @@
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/cm3/scb.h>
 
+#include "cartridge.h"
 #include "platform.h"
+#include "uart.h"
 #include "usb.h"
 
 extern void tap_set_config(usbd_device *dev, uint16_t wValue);
@@ -255,49 +257,30 @@ static void usb_suspend(void)
 #endif
 }
 
-#ifndef STOP_MODE
 static void usb_resume(void)
 {
     if (*USB_FNR_REG & USB_FNR_RXDP) {
         /* Remain suspended if there is noise on the bus
            Ref. RM0008 - Table 172 */
-        *USB_CNTR_REG |= USB_CNTR_FSUSP; 
-        *USB_CNTR_REG |= USB_CNTR_LP_MODE;
+        usb_suspend();
     } else {
-        *USB_CNTR_REG &= ~USB_CNTR_LP_MODE;
+#if STOP_MODE
+        SCB_SCR &= ~SCB_SCR_SLEEPDEEP;
+
+        plat_setup();
+#endif
         *USB_CNTR_REG &= ~USB_CNTR_FSUSP;
     }
 }
-#else
+
 void usb_wakeup_isr(void)
 {
     exti_reset_request(EXTI18);
 
-    /* Re-enable clocks */
-#ifdef PLATFORMIO
-    /* PlatformIO libopencm3 is out of date; Functions depecrated in 4eee1e9b
-       https://github.com/libopencm3/libopencm3/commit/4eee1e9bdecf56bc2976c234dde6f5e177e0c69c */
-#ifdef USE_PLL_HSI
-    rcc_clock_setup_in_hsi_out_48mhz();
-#else
-    rcc_clock_setup_in_hse_8mhz_out_72mhz();
-#endif
-#else
-#ifdef USE_PLL_HSI
-    rcc_clock_setup_pll(&rcc_hsi_configs[RCC_CLOCK_HSI_48MHZ]);
-#else
-    rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
-#endif
-#endif
-
-    SCB_SCR &= ~SCB_SCR_SLEEPDEEP;
-
-    *USB_CNTR_REG &= ~USB_CNTR_LP_MODE;
-    *USB_CNTR_REG &= ~USB_CNTR_FSUSP;
+    usb_resume();
 }
-#endif
 
-usbd_device* usb_setup(void)
+static usbd_device* __usb_setup(void)
 {
 #ifdef USE_PLL_HSI
 #pragma GCC warning "Reliability of USB peripheral is not guaranteed... switch to HSE source."
@@ -323,19 +306,35 @@ usbd_device* usb_setup(void)
 #endif
     usbd_register_set_config_callback(dev, winusb_set_config);
 
-    usbd_register_suspend_callback(dev, usb_suspend);
-#ifndef STOP_MODE
-    usbd_register_resume_callback(dev, usb_resume);
-#endif
-
     /* Pre-register the callback */
     winusb_set_config(dev, 0);
 
-#ifdef STOP_MODE
+    usbd_register_suspend_callback(dev, usb_suspend);
+#ifndef STOP_MODE
+    usbd_register_resume_callback(dev, usb_resume);
+#else
+    /* EXTI18 - USB Wakeup event
+       Ref. RM0008 - Section 10.2.5 */
+    rcc_periph_clock_enable(RCC_AFIO);
+
     exti_set_trigger(EXTI18, EXTI_TRIGGER_RISING);
     exti_enable_request(EXTI18);
+
     nvic_enable_irq(NVIC_USB_WAKEUP_IRQ);
 #endif
 
     return dev;
+}
+
+void usb_run(void)
+{
+    usbd_device *usb_dev;
+
+    plat_setup();
+    uart_setup();
+
+    usb_dev = __usb_setup();
+
+    while (1)
+        usbd_poll(usb_dev);
 }

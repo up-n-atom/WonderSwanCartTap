@@ -25,6 +25,6 @@
 
 #define USB_CONTROL_BUF_SIZE 1024
 
-usbd_device* usb_setup(void);
+void usb_run(void);
 
 #endif
