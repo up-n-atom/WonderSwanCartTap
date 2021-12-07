@@ -25,10 +25,14 @@
 #include <libopencm3/stm32/desig.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/st_usbfs.h>
 
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/usb/dfu.h>
+#include <libopencm3/cm3/scb.h>
 #include <libopencm3/usb/usbd.h>
+
+#include <libopencmsis/core_cm3.h>
 
 #include "platform.h"
 #include "usb.h"
@@ -219,7 +223,7 @@ static inline void __usb_reenumerate(void)
     /* No USB disconnect - drive PA12 connected to the USB D+ */
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO12);
     gpio_clear(GPIOA, GPIO12);
-    msleep(3);
+    msleep(1);
 }
 
 static char serial_no[13];
@@ -240,15 +244,11 @@ usbd_device* usb_setup(void)
 #pragma GCC warning "Reliability of USB peripheral is not guaranteed... switch to HSE source."
 #endif
 
-    usbd_device *dev;
-
-    rcc_periph_clock_enable(RCC_USB);
-
-    __usb_reenumerate();
-
-    rcc_periph_reset_pulse(RST_USB);
+    usbd_device *dev = NULL;
 
     desig_get_unique_id_as_dfu(serial_no);
+
+    __usb_reenumerate();
 
     dev = usbd_init(&st_usbfs_v1_usb_driver, &__dev_desc, &__config,
                     __strings, sizeof(__strings) / sizeof(char*),

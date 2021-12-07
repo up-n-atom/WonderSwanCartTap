@@ -30,6 +30,8 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 
+#include <libopencmsis/core_cm3.h>
+
 #include "platform.h"
 
 #if defined(DEBUG) && defined(SEMIHOSTING)
@@ -65,7 +67,7 @@ static inline void __plat_sleep(void)
     }
 
     while (!sys_millis)
-        __wfi();
+        __WFI();
 }
 
 __attribute__((always_inline))

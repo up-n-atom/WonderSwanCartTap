@@ -23,14 +23,6 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#ifdef STANDBY_SLEEP
-__attribute__((always_inline))
-static inline void __wfi(void)
-{
-    __asm volatile ("wfi");
-}
-#endif
-
 void msleep(unsigned int ms);
 
 void plat_setup(void);
