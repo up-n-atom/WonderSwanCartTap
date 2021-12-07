@@ -20,17 +20,21 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
+#if 1
+#include <libopencmsis/core_cm3.h>
+#else
 #include <libopencm3/cm3/cortex.h>
 #include <libopencm3/cm3/nvic.h>
+#include <libopencm3/cm3/scb.h>
 #include <libopencm3/cm3/systick.h>
+#endif
 
 #ifdef DEBUG
 #include <libopencm3/stm32/dbgmcu.h>
 #endif
 #include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/pwr.h>
 #include <libopencm3/stm32/rcc.h>
-
-#include <libopencmsis/core_cm3.h>
 
 #include "platform.h"
 
@@ -45,7 +49,7 @@ void sys_tick_handler(void)
     sys_millis++;
 }
 
-#ifdef STANDBY_SLEEP
+#ifdef SLEEP_MODE
 __attribute__((always_inline))
 static inline void __plat_sleep_begin(unsigned int msecs)
 {
@@ -82,7 +86,7 @@ void msleep(unsigned int msecs)
 {
     if (!msecs) return;
 
-#ifdef STANDBY_SLEEP
+#ifdef SLEEP_MODE
     __plat_sleep_begin(msecs);
     __plat_sleep();
     __plat_sleep_end();
@@ -117,6 +121,7 @@ inline void led_off(void)
 
 void plat_setup(void)
 {
+#ifdef PLATFORMIO
 #ifdef USE_PLL_HSI
     /* 48Hz / 8 = 6000000 counts per second */
     rcc_clock_setup_in_hsi_out_48mhz();
@@ -124,8 +129,18 @@ void plat_setup(void)
     /* 72Hz / 8 = 9000000 counts per second */
     rcc_clock_setup_in_hse_8mhz_out_72mhz();
 #endif
+#else
+#ifdef USE_PLL_HSI
+     /* 48Hz / 8 = 6000000 counts per second */
+    rcc_clock_setup_pll(&rcc_hsi_configs[RCC_CLOCK_HSI_48MHZ]);
+#else
+    /* 72Hz / 8 = 9000000 counts per second */
+    rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
+#endif
+#endif
+
     systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8);
-#ifndef STANDBY_SLEEP
+#ifndef SLEEP_MODE
 #ifdef USE_PLL_HSI
     /* 6000000/6000 = 1000 overflows per second ie. interrupt every 1ms */
     systick_set_reload(5999);
@@ -139,7 +154,7 @@ void plat_setup(void)
 #endif
 
 #ifdef DEBUG
-#ifdef STANDBY_SLEEP
+#ifdef SLEEP_MODE
     /* Enable debugging during wfi */
     DBGMCU_CR = DBGMCU_CR_STANDBY | DBGMCU_CR_STOP | DBGMCU_CR_SLEEP;
 #endif
@@ -152,3 +167,21 @@ void plat_setup(void)
 
     led_off();
 }
+
+#ifdef STOP_MODE
+void plat_stop_mode(void)
+{
+    rcc_periph_clock_enable(RCC_PWR);
+
+    SCB_SCR &= ~SCB_SCR_SLEEPDEEP;
+    SCB_SCR &= ~SCB_SCR_SLEEPONEXIT;
+
+    pwr_clear_wakeup_flag();
+
+    SCB_SCR |= SCB_SCR_SLEEPDEEP;
+    pwr_voltage_regulator_low_power_in_stop();
+    pwr_set_stop_mode();
+
+    __WFI();
+}
+#endif
