@@ -20,10 +20,8 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#ifndef USB_H
-#define USB_H
-
-#define WINUSB_MS_VENDOR_CODE 0x21
+#ifndef WINUSB_H
+#define WINUSB_H
 
 void winusb_set_config(usbd_device *dev, uint16_t wValue);
 
