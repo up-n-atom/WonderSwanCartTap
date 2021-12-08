@@ -266,7 +266,7 @@ static void usb_resume(void)
            Ref. RM0008 - Table 172 */
         usb_suspend();
     } else {
-#if STOP_MODE
+#ifdef STOP_MODE
         SCB_SCR &= ~SCB_SCR_SLEEPDEEP;
 
         plat_setup();
