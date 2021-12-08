@@ -220,17 +220,6 @@ static const struct usb_config_descriptor __config = {
     .interface = __ifaces,
 };
 
-__attribute__((always_inline))
-static inline void __usb_reenumerate(void)
-{
-    rcc_periph_clock_enable(RCC_GPIOA);
-
-    /* No USB disconnect - drive PA12 connected to the USB D+ */
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO12);
-    gpio_clear(GPIOA, GPIO12);
-    msleep(1);
-}
-
 static char serial_no[13];
 
 static const char *__strings[] = {
@@ -243,7 +232,18 @@ static const char *__strings[] = {
 
 static uint8_t __control_buffer[USB_CONTROL_BUF_SIZE] __attribute__ ((aligned (2)));
 
-static void usb_suspend(void)
+__attribute__((always_inline))
+static inline void __usb_reenumerate(void)
+{
+    rcc_periph_clock_enable(RCC_GPIOA);
+
+    /* No USB disconnect - drive PA12 connected to the USB D+ */
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO12);
+    gpio_clear(GPIOA, GPIO12);
+    msleep(1);
+}
+
+static void __usb_suspend(void)
 {
     /* Todo: All peripherals should be disabled and the cartridge should be powered down to meet
        the 2.5mA requirement. */
@@ -259,14 +259,14 @@ static void usb_suspend(void)
 #endif
 }
 
-static void usb_resume(void)
+static void __usb_resume(void)
 {
     if (*USB_FNR_REG & USB_FNR_RXDP) {
         /* Remain suspended if there is noise on the bus
            Ref. RM0008 - Table 172 */
-        usb_suspend();
+        __usb_suspend();
     } else {
-#if STOP_MODE
+#ifdef STOP_MODE
         SCB_SCR &= ~SCB_SCR_SLEEPDEEP;
 
         plat_setup();
@@ -275,13 +275,6 @@ static void usb_resume(void)
 
         cart_detect_enable();
     }
-}
-
-void usb_wakeup_isr(void)
-{
-    exti_reset_request(EXTI18);
-
-    usb_resume();
 }
 
 static usbd_device* __usb_setup(void)
@@ -313,9 +306,9 @@ static usbd_device* __usb_setup(void)
     /* Pre-register the callback */
     winusb_set_config(dev, 0);
 
-    usbd_register_suspend_callback(dev, usb_suspend);
+    usbd_register_suspend_callback(dev, __usb_suspend);
 #ifndef STOP_MODE
-    usbd_register_resume_callback(dev, usb_resume);
+    usbd_register_resume_callback(dev, __usb_resume);
 #else
     /* EXTI18 - USB Wakeup event
        Ref. RM0008 - Section 10.2.5 */
@@ -336,7 +329,6 @@ void usb_run(void)
 
     plat_setup();
     uart_setup();
-    led_setup();
 
     cart_detect_enable();
 
@@ -344,4 +336,11 @@ void usb_run(void)
 
     while (1)
         usbd_poll(usb_dev);
+}
+
+void usb_wakeup_isr(void)
+{
+    exti_reset_request(EXTI18);
+
+    __usb_resume();
 }
