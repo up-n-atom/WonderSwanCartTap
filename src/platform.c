@@ -133,7 +133,7 @@ void plat_setup(void)
 #endif
 
 #ifdef DEBUG
-#ifdef SLEEP_MODE
+#if defined(SLEEP_MODE) || defined(STOP_MODE)
     /* Enable debugging during wfi */
     DBGMCU_CR = DBGMCU_CR_STANDBY | DBGMCU_CR_STOP | DBGMCU_CR_SLEEP;
 #endif
