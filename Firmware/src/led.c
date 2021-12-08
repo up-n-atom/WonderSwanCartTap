@@ -20,15 +20,34 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/rcc.h>
 
-void msleep(unsigned int ms);
+#include "led.h"
 
-void plat_setup(void);
+__attribute__((always_inline))
+static inline void __gpio_setup(void)
+{
+    rcc_periph_clock_enable(RCC_GPIOC);
 
-#ifdef STOP_MODE
-void plat_stop_mode(void);
-#endif
+    /* LED */
+    gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
+                  GPIO13);
+}
 
-#endif
+__attribute__((always_inline))
+inline void led_on(void)
+{
+    gpio_clear(GPIOC, GPIO13); /* LED active low!*/
+}
+
+__attribute__((always_inline))
+inline void led_off(void)
+{
+    gpio_set(GPIOC, GPIO13); /* LED active low!*/
+}
+
+void led_setup(void)
+{
+    __gpio_setup();
+}

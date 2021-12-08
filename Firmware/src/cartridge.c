@@ -34,6 +34,7 @@
 
 #include "cartridge.h"
 #include "fsmc.h"
+#include "led.h"
 #include "platform.h"
 
 __attribute__((always_inline))
@@ -496,6 +497,8 @@ void cart_detect_enable(void)
     exti_set_trigger(EXTI4, EXTI_TRIGGER_BOTH);
     exti_enable_request(EXTI4);
 
+    led_setup();
+
     if ((gpio_get(GPIOB, GPIO4) & GPIO4))
         led_on();
     else
@@ -504,6 +507,8 @@ void cart_detect_enable(void)
 
 void cart_detect_disable(void)
 {
+    led_off();
+
     exti_disable_request(EXTI4);
 
     nvic_disable_irq(NVIC_EXTI4_IRQ);

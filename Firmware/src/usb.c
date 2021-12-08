@@ -37,6 +37,7 @@
 #include <libopencm3/cm3/scb.h>
 
 #include "cartridge.h"
+#include "led.h"
 #include "platform.h"
 #include "uart.h"
 #include "usb.h"
@@ -246,6 +247,7 @@ static void usb_suspend(void)
 {
     /* Todo: All peripherals should be disabled and the cartridge should be powered down to meet
        the 2.5mA requirement. */
+    cart_detect_disable();
 
     /* libopencm3 clears the suspend interrupt prior to calling this function, while it should be
        cleared after the following... */
@@ -270,6 +272,8 @@ static void usb_resume(void)
         plat_setup();
 #endif
         *USB_CNTR_REG &= ~USB_CNTR_FSUSP;
+
+        cart_detect_enable();
     }
 }
 
@@ -332,6 +336,9 @@ void usb_run(void)
 
     plat_setup();
     uart_setup();
+    led_setup();
+
+    cart_detect_enable();
 
     usb_dev = __usb_setup();
 

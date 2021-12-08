@@ -32,7 +32,6 @@
 #ifdef DEBUG
 #include <libopencm3/stm32/dbgmcu.h>
 #endif
-#include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/pwr.h>
 #include <libopencm3/stm32/rcc.h>
 
@@ -97,28 +96,6 @@ void msleep(unsigned int msecs)
 #endif
 }
 
-__attribute__((always_inline))
-static inline void __gpio_setup(void)
-{
-    rcc_periph_clock_enable(RCC_GPIOC);
-
-    /* LED */
-    gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
-                  GPIO13);
-}
-
-__attribute__((always_inline))
-inline void led_on(void)
-{
-    gpio_clear(GPIOC, GPIO13); /* LED active low!*/
-}
-
-__attribute__((always_inline))
-inline void led_off(void)
-{
-    gpio_set(GPIOC, GPIO13); /* LED active low!*/
-}
-
 void plat_setup(void)
 {
 #ifdef PLATFORMIO
@@ -156,7 +133,7 @@ void plat_setup(void)
 #endif
 
 #ifdef DEBUG
-#ifdef SLEEP_MODE
+#if defined(SLEEP_MODE) || defined(STOP_MODE)
     /* Enable debugging during wfi */
     DBGMCU_CR = DBGMCU_CR_STANDBY | DBGMCU_CR_STOP | DBGMCU_CR_SLEEP;
 #endif
@@ -164,10 +141,6 @@ void plat_setup(void)
     initialise_monitor_handles();
 #endif
 #endif
-
-    __gpio_setup();
-
-    led_off();
 }
 
 #ifdef STOP_MODE

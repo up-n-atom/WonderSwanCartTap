@@ -20,15 +20,13 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE. */
 
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#ifndef LED_H
+#define LED_H
 
-void msleep(unsigned int ms);
+void led_setup(void);
 
-void plat_setup(void);
+void led_on(void);
 
-#ifdef STOP_MODE
-void plat_stop_mode(void);
-#endif
+void led_off(void);
 
 #endif

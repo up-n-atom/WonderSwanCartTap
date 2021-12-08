@@ -398,8 +398,6 @@ void tap_set_config(usbd_device *dev, __attribute__((unused)) uint16_t wValue)
 {
     tim2_3_setup();
 
-    cart_detect_enable();
-
     usbd_register_control_callback(dev, USB_REQ_TYPE_VENDOR | USB_REQ_TYPE_INTERFACE,
                                    USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
                                    __tap_control_request);
