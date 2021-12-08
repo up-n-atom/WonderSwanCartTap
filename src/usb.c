@@ -336,7 +336,6 @@ void usb_run(void)
 
     plat_setup();
     uart_setup();
-    led_setup();
 
     cart_detect_enable();
 
