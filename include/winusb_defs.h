@@ -19,7 +19,7 @@
 #ifndef WINUSB_DEFS_H_INCLUDED
 #define WINUSB_DEFS_H_INCLUDED
 
-#include <stdint.h>
+#define WINUSB_MS_VENDOR_CODE 0x21
 
 /* Microsoft OS 1.0 descriptors */
 
