@@ -24,6 +24,8 @@
 
 int main(void)
 {
+    plat_setup();
+
     usb_run();
 
     return 0;

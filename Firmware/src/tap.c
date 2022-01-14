@@ -74,11 +74,12 @@ static inline void __set_error_state(enum tap_error err)
 {
     __set_error(err);
 
-    if (err)
+    if (err) {
         __set_state(TAP_ST8_ERROR);
-    else
+    } else {
         if (__get_state() == TAP_ST8_ERROR)
             __set_state(TAP_ST8_IDLE);
+    }
 }
 
 __attribute__((always_inline))
@@ -286,8 +287,8 @@ static enum usbd_request_return_codes __tap_control_request(
 
         uint32_t addr = req->wValue;
 
-        if (0x10000 < (addr + *len - 1))
-            *len = 0x10000 - addr;
+        if (REGION_SIZE < (addr + *len - 1))
+            *len = REGION_SIZE - addr;
 
         addr |= SRAM_BASE;
 
@@ -319,8 +320,8 @@ static enum usbd_request_return_codes __tap_control_request(
             return USBD_REQ_HANDLED;
         }
 
-        if (0x10000 < (addr + *len - 2))
-            *len = 0x10000 - addr;
+        if (REGION_SIZE < (addr + *len - 2))
+            *len = REGION_SIZE - addr;
 
         addr |= req->bRequest == TAP_R1MPEEK ? ROM1_BASE : ROM0_BASE;
 
@@ -364,8 +365,8 @@ static enum usbd_request_return_codes __tap_control_request(
 
         uint32_t addr = req->wValue;
 
-        if (0x10000 < (addr + *len - 1))
-            *len = 0x10000 - addr;
+        if (REGION_SIZE < (addr + *len - 1))
+            *len = REGION_SIZE - addr;
 
         addr |= SRAM_BASE;
 

@@ -415,9 +415,8 @@ static inline uint32_t __cart_get_secret(void)
         __ibuf[i] = 0;
     }
     /* Clear remaining buffer */
-    while (i < XFER_WIDTH) {
+    while (i < XFER_WIDTH)
         __ibuf[i++] = 0;
-    }
 
     return sec;
 }
@@ -437,7 +436,7 @@ int cart_handshake(void)
 
     __dma_setup();
 
-    /* bitbang time...*/
+    /* bitbang time! */
 
     /* /RST */
     gpio_clear(GPIOF, GPIO11);
