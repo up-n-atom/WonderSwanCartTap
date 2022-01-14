@@ -286,8 +286,8 @@ static enum usbd_request_return_codes __tap_control_request(
 
         uint32_t addr = req->wValue;
 
-        if (0x10000 < (addr + *len - 1))
-            *len = 0x10000 - addr;
+        if (REGION_SIZE < (addr + *len - 1))
+            *len = REGION_SIZE - addr;
 
         addr |= SRAM_BASE;
 
@@ -319,8 +319,8 @@ static enum usbd_request_return_codes __tap_control_request(
             return USBD_REQ_HANDLED;
         }
 
-        if (0x10000 < (addr + *len - 2))
-            *len = 0x10000 - addr;
+        if (REGION_SIZE < (addr + *len - 2))
+            *len = REGION_SIZE - addr;
 
         addr |= req->bRequest == TAP_R1MPEEK ? ROM1_BASE : ROM0_BASE;
 
@@ -364,8 +364,8 @@ static enum usbd_request_return_codes __tap_control_request(
 
         uint32_t addr = req->wValue;
 
-        if (0x10000 < (addr + *len - 1))
-            *len = 0x10000 - addr;
+        if (REGION_SIZE < (addr + *len - 1))
+            *len = REGION_SIZE - addr;
 
         addr |= SRAM_BASE;
 
