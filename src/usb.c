@@ -327,7 +327,6 @@ void usb_run(void)
 {
     usbd_device *usb_dev;
 
-    plat_setup();
     uart_setup();
 
     cart_detect_enable();
