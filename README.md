@@ -30,4 +30,7 @@ The following boards are optional and used to facilitate with debugging and reve
 
 ![WSCartBreakoutFront](https://user-images.githubusercontent.com/234549/142709782-ff089b7b-f5fc-40c2-98db-59b2839a69a4.png) ![WSCartBreakoutBack](https://user-images.githubusercontent.com/234549/142709785-f3c0b935-a1fc-4926-a742-5767b93c18a6.png)
 
-* Revolution Probe
+* [Revolution Probe](https://github.com/up-n-atom/RevP)
+
+![RevPFront](https://user-images.githubusercontent.com/234549/155450569-079e3904-135a-4d02-a658-30e5c329bad5.png) ![RevPBack](https://user-images.githubusercontent.com/234549/155450582-df5b4194-14c5-48c6-b385-9c464b870b30.png)
+
