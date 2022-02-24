@@ -32,5 +32,6 @@ The following boards are optional and used to facilitate with debugging and reve
 
 * [Revolution Probe](https://github.com/up-n-atom/RevP)
 
-![RevPFront](https://user-images.githubusercontent.com/234549/155450569-079e3904-135a-4d02-a658-30e5c329bad5.png) ![RevPBack](https://user-images.githubusercontent.com/234549/155450582-df5b4194-14c5-48c6-b385-9c464b870b30.png)
+![RevPFront](https://user-images.githubusercontent.com/234549/155450569-079e3904-135a-4d02-a658-30e5c329bad5.png) ![RevPBack](https://user-images.githubusercontent.com/234549/155451122-6cbb0c17-dedd-474d-b96d-1a51de81dfb1.png)
+
 
